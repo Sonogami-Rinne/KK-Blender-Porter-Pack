@@ -67,34 +67,46 @@ class modify_material(bpy.types.Operator):
 
     def execute(self, context):
         try:
+            modify_material.export_light_dark_material = c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture')
 
+            self.load_materials()
             self.remove_unused_material_slots()
             self.remap_duplicate_material_slots()
 
-            self.replace_materials_for_body()
-            self.replace_materials_for_hair()
-            self.replace_materials_for_outfits()
-            self.replace_materials_for_tears_tongue_gageye()
-            self.remove_duplicate_node_groups()
+            if modify_material.export_light_dark_material:
+                self.ELDT_load_images()
+                self.ELDT_replace_materials_and_link_textures_adjust_UV()
+            else:
+                self.replace_materials_for_body()
+                self.replace_materials_for_hair()
+                self.replace_materials_for_outfits()
 
-            self.load_images()
-            self.link_textures_for_face_body()
-            self.link_textures_for_hair()
-            self.link_textures_for_clothes()
-            self.link_textures_for_tongue_tear_gag()
-            self.create_dark_textures()
+            self.replace_materials_for_tears_tongue_gageye()
+
+            if not modify_material.export_light_dark_material:
+                self.remove_duplicate_node_groups()
+
+                self.load_images()
+                self.link_textures_for_face_body()
+                self.link_textures_for_hair()
+                self.link_textures_for_clothes()
+                self.link_textures_for_tongue_tear_gag()
+                self.create_dark_textures()
 
             self.import_and_setup_smooth_normals()
             self.setup_gag_eye_material_drivers()
 
-            self.add_outlines_to_body()
-            self.add_outlines_to_hair()
-            self.add_outlines_to_clothes()
+            if not modify_material.export_light_dark_material:
+                self.add_outlines_to_body()
+                self.add_outlines_to_hair()
+                self.add_outlines_to_clothes()
 
-            self.load_luts()
-            self.load_json_colors()
+                self.load_luts()
+                self.load_json_colors()
+                self.adjust_pupil_highlight()
+
             self.set_color_management()
-            self.adjust_pupil_highlight()
+
 
             c.clean_orphaned_data()
             return {'FINISHED'}
@@ -111,6 +123,33 @@ class modify_material(bpy.types.Operator):
         modify_material.texel_height_X0 = numpy.array([1 / 32, 0], dtype=modify_material.np_number_precision)
         pass
 
+    def load_materials(self):
+        templateList = [
+            'KK Body',
+            'KK Tears',
+            'KK Gag00',
+            'KK Gag01',
+            'KK Gag02',
+            'KK EyeR (hitomi)',
+            'KK EyeL (hitomi)',
+            'KK Eyebrows (mayuge)',
+            'KK Eyeline down',
+            'KK Eyeline kage',
+            'KK Eyeline up',
+            'KK Eyewhites (sirome)',
+            'KK Face',
+            'KK General',
+            'KK Hair',
+            'KK Nose',
+            'KK Teeth (tooth)',
+            'KK Simple',
+            'KK Glasses',
+            'Outline General',
+            'Outline Body',
+            'KK Light Dark Texture',
+            'KK Transparent'
+        ]
+        c.import_from_library_file(category='Material', list_of_items=templateList, use_fake_user=True)
     # %% Main functions
     def remove_unused_material_slots(self):
         '''Remove unused mat slots on all visible objects'''
@@ -184,30 +223,6 @@ class modify_material(bpy.types.Operator):
         c.switch(c.get_body(), 'object')
         if bpy.app.version[0] != 3:
             c.get_body().visible_shadow = False
-        templateList = [
-            'KK Body',
-            'KK Tears',
-            'KK Gag00',
-            'KK Gag01',
-            'KK Gag02',
-            'KK EyeR (hitomi)',
-            'KK EyeL (hitomi)',
-            'KK Eyebrows (mayuge)',
-            'KK Eyeline down',
-            'KK Eyeline kage',
-            'KK Eyeline up',
-            'KK Eyewhites (sirome)',
-            'KK Face',
-            'KK General',
-            'KK Hair',
-            'KK Nose',
-            'KK Teeth (tooth)',
-            'KK Simple',
-            'KK Glasses',
-            'Outline General',
-            'Outline Body',
-        ]
-        c.import_from_library_file(category='Material', list_of_items=templateList, use_fake_user=True)
 
         #Replace all materials on the body with templates
         def swap_body_material(original_materials: list[str], template_name: str):
@@ -520,6 +535,24 @@ class modify_material(bpy.types.Operator):
 
         with self.queue_lock:
             self.data_queue.put(index)
+
+    def ELDT_load_images(self):
+        c.switch(c.get_body(), 'object')
+        file_dir = Path(bpy.context.scene.kkbp.import_dir)
+
+        files = list(file_dir.rglob('**/pre_light/*'))
+        files.extend(list(file_dir.rglob('**/pre_dark/*')))
+        files.extend(list(file_dir.rglob('*_AM.png')))
+        files.extend(list(file_dir.rglob('*_NMP_CNV.png')))
+        files.extend(list(file_dir.rglob('*_NMPD_CNV.png')))
+
+        for file in files:
+            bpy.ops.image.open(filepath=str(file), use_udim_detecting=False)
+            try:
+                bpy.data.images[file.name].pack()
+            except:
+                c.kklog(
+                    'This image was not automatically loaded in because its filename exceeds 64 characters: ' + file.name, type='error')
 
     def ELDT_replace_materials_and_link_textures_adjust_UV(self):
         c.import_from_library_file(category='Material', list_of_items=["KK Light Dark Texture"], use_fake_user=True)

@@ -37,7 +37,10 @@ class modify_mesh(bpy.types.Operator):
             self.separate_hair()
             self.separate_alternate_clothing()
             self.delete_shad_bone()
-            # self.delete_eyeline_down() I think we could delete this mesh, as it is transparent and do not participate in any shape key
+
+            if c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture'):
+                self.delete_eyeline_down()
+
             self.separate_hitboxes()
             self.delete_mask_quad()
 
