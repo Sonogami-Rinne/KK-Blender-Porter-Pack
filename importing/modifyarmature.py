@@ -380,11 +380,8 @@ class modify_armature(bpy.types.Operator):
         #  Set roll data
         c.switch(c.get_armature(), 'Edit')
         for bone_name, bone_info in edit_bone_info.items():
-            bone = c.get_armature().data.edit_bones[bone_name]
-
-            # euler = bone_info['rotation'].to_euler('ZXY')
-            # bone.roll = euler.z
-            bone.matrix = bone_info['worldMatrix'].copy()
+            if bone := c.get_armature().data.edit_bones.get(bone_name):
+                bone.matrix = bone_info['worldMatrix'].copy()
             # length = bone.length
             # bone.tail.x = bone.head.x
             # bone.tail.y = bone.head.y

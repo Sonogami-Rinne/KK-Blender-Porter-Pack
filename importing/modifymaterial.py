@@ -98,6 +98,7 @@ class modify_material(bpy.types.Operator):
 
             if not modify_material.export_light_dark_material:
                 self.add_outlines_to_body()
+                self.add_outlines_to_bonelyfans()
                 self.add_outlines_to_hair()
                 self.add_outlines_to_clothes()
 
@@ -604,7 +605,7 @@ class modify_material(bpy.types.Operator):
                         material = mesh.material_slots[material_index].material
                         material.node_tree.nodes["UV Scale"].inputs[3].default_value[0] = entry['xScale']
                         material.node_tree.nodes["UV Scale"].inputs[3].default_value[1] = entry['yScale']
-                        material.node_tree.nodes["AlphaMask Stage Switch"].outputs[0].default_value = 0 if entry['AlphaMaskAStage'][index] <= 0 else 2
+                        material.node_tree.nodes["AlphaMask Stage Switch"].outputs[0].default_value = 0 if entry['AlphaMaskAStage'][index] == 0 else 2
 
                         for texture_name in textures:
                             if image := bpy.data.images.get(material_name + texture_name):
