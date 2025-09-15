@@ -481,9 +481,12 @@ class modify_material(bpy.types.Operator):
                         future = executor.submit(
                             self.saturate_texture,
                             unloaded,
-                            image_pixels[start_row:end_row - 1]
+                            image_pixels[start_row:end_row],
+                            start_row == 0
                         )
-                        start_row = end_row
+                        start_row = end_row - 1
+                        if start_row == height - 1:
+                            break
 
                         futures.append(future)
 
@@ -511,7 +514,7 @@ class modify_material(bpy.types.Operator):
 
         c.print_timer('load_images')
 
-    def saturate_texture(self, index, slice_image):
+    def saturate_texture(self, index, slice_image, is_first_batch):
         '''The Secret Sauce. Accepts a bpy image and saturates it to match the in-game look.'''
         # Find the XY coordinates of the LUT image needed to saturate each pixel
         coord = slice_image[:, :, :3] * self.coord_scale + self.coord_offset
@@ -532,8 +535,11 @@ class modify_material(bpy.types.Operator):
         lut_colors += lutcol_top * coord_frac_z
         del lutcol_top
         del coord_top
-        slice_image[:, :, :3] = lut_colors[:,:,:3]
-
+        # slice_image[:, :, :3] = lut_colors[:,:,:3]
+        if is_first_batch:
+            slice_image[:, :, :3] = lut_colors[:,:,:3]
+        else:
+            slice_image[1:, :, :3] = lut_colors[1:, :, :3]
         with self.queue_lock:
             self.data_queue.put(index)
 
