@@ -593,16 +593,18 @@ class modify_mesh(bpy.types.Operator):
 
     def correct_shapekeys(self):
         '''correct eye close shape key if necessary'''
-        shapekey_block = bpy.data.shape_keys[c.get_body().data.shape_keys.name].key_blocks
-        for shapekey in shapekey_block:
-            if shapekey.name.startswith('KK') and shapekey.name.find('Eyes') >= 0:
-                shapekey.slider_max = 1 - 0.185
+        if value := c.json_file_manager.get_json_file('KK_BlendShapeInfo.json'):
+            value = value[0]['blendShapeWeight'][0] / 100
+            shapekey_block = bpy.data.shape_keys[c.get_body().data.shape_keys.name].key_blocks
+            for shapekey in shapekey_block:
+                if shapekey.name.startswith('KK') and shapekey.name.find('Eyes') >= 0:
+                    shapekey.slider_max = 1 - value
 
-        c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_min = 0.185
-        c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].value = 0.185
-        c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = 1
+            c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_min = value
+            c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].value = value
+            c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = 1
 
-        c.print_timer('correct shapekeys')
+            c.print_timer('correct shapekeys')
 
     def create_tear_shapekeys(self):
         '''Separate tears from body and create tear shapekeys'''
