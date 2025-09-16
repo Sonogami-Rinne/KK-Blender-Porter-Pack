@@ -61,9 +61,10 @@ class modify_armature(bpy.types.Operator):
 
             self.remove_bone_locks_and_modifiers()
             self.scale_armature_bones_down()
-            self.reparent_leg_and_body_bone()
             if not compatible_mode:
                 self.rebuild_bone_data()
+            self.reparent_leg_and_body_bone()
+
 
             self.delete_non_height_bones()
 
@@ -200,6 +201,7 @@ class modify_armature(bpy.types.Operator):
         '''Reparent the leg bone to match the koikatsu armature. Unparent the body_bone bone to match koikatsu armature'''
         if bpy.context.scene.kkbp.armature_dropdown != 'D':
             armature = c.get_armature()
+            c.switch(armature, 'EDIT')
             #reparent foot to leg03
             armature.data.edit_bones['cf_j_foot_R'].parent = armature.data.edit_bones['cf_j_leg03_R']
             armature.data.edit_bones['cf_j_foot_L'].parent = armature.data.edit_bones['cf_j_leg03_L']
@@ -331,21 +333,9 @@ class modify_armature(bpy.types.Operator):
         edit_bone_info = {}
         final_bone_info = {}
         for _bone in c.json_file_manager.get_json_file("KK_EditBoneInfo.json"):
-            # transform = _bone['transform']
             world_transform = _bone['worldTransform']
             edit_bone_info[_bone['boneName']] = {
-                # 'translate': Vector(_bone['position']),
                 'rotation': Quaternion(_bone['rotation']),
-                # 'scale': Vector(_bone['scale']),
-                # 'matrix': Matrix([
-                #     [transform[0], transform[1], transform[2], transform[3]],
-                #     [transform[4], transform[5], transform[6], transform[7]],
-                #     [transform[8], transform[9], transform[10], transform[11]],
-                #     [transform[12], transform[13], transform[14], transform[15]],
-                # ]),
-                # 'worldTranslate': Vector(_bone['worldPosition']),
-                # 'worldRotation': Quaternion(_bone['worldRotation']),
-                # 'worldScale': Vector(_bone['worldScale']),
                 'worldMatrix': Matrix([
                     [world_transform[0], world_transform[1], world_transform[2], world_transform[3]],
                     [world_transform[4], world_transform[5], world_transform[6], world_transform[7]],
@@ -354,38 +344,19 @@ class modify_armature(bpy.types.Operator):
                 ]),
             }
         for _bone in c.json_file_manager.get_json_file("KK_FinalBoneInfo.json"):
-            # transform = _bone['transform']
-            # world_transform = _bone['worldTransform']
             final_bone_info[_bone['boneName']] = {
-                # 'translate': Vector(_bone['position']),
-                # 'rotation': Quaternion(_bone['rotation']),
                 'scale': Vector(_bone['scale']),
-                # 'matrix': Matrix([
-                #     [transform[0], transform[1], transform[2], transform[3]],
-                #     [transform[4], transform[5], transform[6], transform[7]],
-                #     [transform[8], transform[9], transform[10], transform[11]],
-                #     [transform[12], transform[13], transform[14], transform[15]],
-                # ]),
-                # 'worldTranslate': Vector(_bone['worldPosition']),
-                # 'worldRotation': Quaternion(_bone['worldRotation']),
-                # 'worldScale': Vector(_bone['worldScale']),
-                # 'worldMatrix': Matrix([
-                #     [world_transform[0], world_transform[1], world_transform[2], world_transform[3]],
-                #     [world_transform[4], world_transform[5], world_transform[6], world_transform[7]],
-                #     [world_transform[8], world_transform[9], world_transform[10], world_transform[11]],
-                #     [world_transform[12], world_transform[13], world_transform[14], world_transform[15]],
-                # ]),
             }
-
+        count = 0
         #  Set roll data
         c.switch(c.get_armature(), 'Edit')
         for bone_name, bone_info in edit_bone_info.items():
             if bone := c.get_armature().data.edit_bones.get(bone_name):
                 bone.matrix = bone_info['worldMatrix'].copy()
-            # length = bone.length
-            # bone.tail.x = bone.head.x
-            # bone.tail.y = bone.head.y
-            # bone.tail.z = bone.tail.z + length
+                # if (count := count + 1) % 20 == 0:
+                #     bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
         # Set scale data
         c.switch(c.get_armature(), 'POSE')
@@ -393,6 +364,12 @@ class modify_armature(bpy.types.Operator):
             if bone := c.get_armature().pose.bones.get(bone_name):
                 bone.scale = bone_info['scale'].copy()
 
+        bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+
+        for bone in bpy.context.object.pose.bones:
+            bone.bone.select = True
+
+        bpy.ops.mysteryem.apply_pose_as_rest_pose_plus('INVOKE_DEFAULT')
         c.switch(c.get_armature(), 'OBJECT')
         c.print_timer('Rebuild bone data')
 

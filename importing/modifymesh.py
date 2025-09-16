@@ -47,9 +47,10 @@ class modify_mesh(bpy.types.Operator):
             self.remove_unused_shapekeys()
             self.translate_shapekeys()
             self.combine_shapekeys()
-            self.create_tear_shapekeys()
-            self.create_gag_eye_shapekeys()
             self.correct_shapekeys()
+            if not c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture'):
+                self.create_tear_shapekeys()
+                self.create_gag_eye_shapekeys()
 
             self.remove_body_seams()
             self.mark_body_freestyle_faces()
@@ -346,7 +347,7 @@ class modify_mesh(bpy.types.Operator):
             "eye_siroR.sR00":       "EyeWhitesR",
             "eye_line_u.elu00":     "Eyelashes1",
             "eye_line_l.ell00":     "Eyelashes2",
-            "eye_naM.naM00":        "EyelashesPos",
+            # "eye_naM.naM00":        "EyelashesPos",
             "eye_nose.nl00":        "NoseTop",
             "kuti_nose.nl00":       "NoseBot",
             "kuti_ha.ha00":         "Teeth",
@@ -523,7 +524,7 @@ class modify_mesh(bpy.types.Operator):
                         if emotion in supporting_shapekey.name and cat == whatCat(supporting_shapekey.name):
                             #and this key has hasn't been used yet activate it, else skip to the next
                             if (supporting_shapekey.name not in used):
-                                supporting_shapekey.value = ACTIVE
+                                supporting_shapekey.value = 1 if cat == 'Eyes' else ACTIVE
                                 inUse.append(supporting_shapekey.name)
                     #The shapekeys for the current emotion are now all active
                     #Some need manual corrections
@@ -569,7 +570,6 @@ class modify_mesh(bpy.types.Operator):
                 #lazy crash prevention
                 if counter % 20 == 0:
                     bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-
         #Delete all shapekeys that don't have a "KK" in their name
         #Don't delete the Basis shapekey though
         #If no KK shapekeys were generated, something went wrong so don't delete any shapekeys
@@ -593,8 +593,15 @@ class modify_mesh(bpy.types.Operator):
 
     def correct_shapekeys(self):
         '''correct eye close shape key if necessary'''
-        if eye_open_max := c.json_file_manager.get_json_file('KK_CharacterInfoData.json')[0].get("eyeOpenMax"):
-            c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = eye_open_max
+        shapekey_block = bpy.data.shape_keys[c.get_body().data.shape_keys.name].key_blocks
+        for shapekey in shapekey_block:
+            if shapekey.name.startswith('KK') and shapekey.name.find('Eyes') >= 0:
+                shapekey.slider_max = 1 - 0.185
+
+        c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_min = 0.185
+        c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].value = 0.185
+        c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = 1
+
         c.print_timer('correct shapekeys')
 
     def create_tear_shapekeys(self):

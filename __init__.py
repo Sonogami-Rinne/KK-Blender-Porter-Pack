@@ -53,6 +53,8 @@ def reg_unreg(register_bool):
     from .extras.resetmaterials import reset_materials
     from .extras.linkhair import link_hair
 
+    from .extras.torestpose import ApplyPoseAsRestPosePlus
+
     from . KKPanel import PlaceholderProperties
     from . KKPanel import (
         IMPORTINGHEADER_PT_panel,
@@ -87,6 +89,8 @@ def reg_unreg(register_bool):
         InstallPIL,
         reset_materials,
         link_hair,
+
+        ApplyPoseAsRestPosePlus,
 
         kkbp_import,
         modify_mesh,
