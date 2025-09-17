@@ -347,14 +347,11 @@ class modify_armature(bpy.types.Operator):
             final_bone_info[_bone['boneName']] = {
                 'scale': Vector(_bone['scale']),
             }
-        count = 0
         #  Set roll data
         c.switch(c.get_armature(), 'Edit')
         for bone_name, bone_info in edit_bone_info.items():
             if bone := c.get_armature().data.edit_bones.get(bone_name):
                 bone.matrix = bone_info['worldMatrix'].copy()
-                # if (count := count + 1) % 20 == 0:
-                #     bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
