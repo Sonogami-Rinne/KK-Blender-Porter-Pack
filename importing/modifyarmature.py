@@ -347,11 +347,121 @@ class modify_armature(bpy.types.Operator):
             final_bone_info[_bone['boneName']] = {
                 'scale': Vector(_bone['scale']),
             }
+
+        # Don't set the roll data for these bones because they are rotation sensitive bones
+        ignore_bones = [
+            'cf_j_leg01_R', 'cf_j_foot_R',
+            'cf_j_leg01_L', 'cf_j_foot_L',
+            'cf_j_forearm01_R', 'cf_j_hand_R',
+            'cf_j_forearm01_L', 'cf_j_hand_L',
+            'cf_pv_hand_R', 'cf_j_hand_R',
+            'cf_pv_hand_L', 'cf_j_hand_L',
+            'cf_j_foot_R', 'cf_j_toes_R', 
+            'cf_j_foot_L', 'cf_j_toes_L', 
+            'Toes4_L', 'Toes4_L', 'Toes0_L', 'Toes0_L', 'Toes30_L', 'Toes30_L', 'Toes20_L', 
+            'Toes20_L', 'Toes10_L', 'Toes10_L', 'Toes4_R', 'Toes4_R', 'Toes0_R', 'Toes0_R', 
+            'Toes30_R', 'Toes30_R', 'Toes20_R', 'Toes20_R', 'Toes10_R', 'Toes10_R', 'Toes30_L', 
+            'Toes30_L', 'Toes10_L', 'Toes30_L', 'Toes30_L', 'Toes30_L', 'Toes20_L', 'Toes20_L', 
+            'Toes10_L', 'Toes10_L', 'Toes30_R', 'Toes30_R', 'Toes10_R', 'Toes30_R', 'Toes30_R', 
+            'Toes30_R', 'Toes20_R', 'Toes20_R', 'Toes10_R', 'Toes10_R',
+            'cf_j_kokan',
+            'cf_pv_root_upper', 'cf_j_spine01',
+            'cf_pv_elbo_R', 'cf_pv_root_upper',
+            'cf_pv_elbo_L', 'cf_pv_root_upper',
+            'cf_j_forearm01_R', 'cf_pv_hand_R', 'cf_pv_elbo_R',
+            'cf_j_forearm01_L', 'cf_pv_hand_L', 'cf_pv_elbo_L',
+            'cf_j_leg01_R', 'cf_pv_foot_R', 'cf_pv_knee_R',
+            'cf_j_leg01_L', 'cf_pv_foot_L', 'cf_pv_knee_L',
+            'cf_pv_foot_R', 'cf_j_leg01_R', 'cf_j_toes_R', 'cf_j_foot_R',
+            'cf_pv_foot_L', 'cf_j_leg01_L', 'cf_j_toes_L', 'cf_j_foot_L',
+
+            'cf_d_shoulder02_L', 'cf_j_arm00_L'
+            'cf_d_arm01_L', 'cf_j_arm00_L', 
+            'cf_d_arm02_L', 'cf_j_arm00_L', 
+            'cf_d_arm03_L', 'cf_j_arm00_L', 
+            'cf_d_forearm02_L', 'cf_j_hand_L', 
+            'cf_d_wrist_L', 'cf_j_hand_L', 
+            'cf_d_kneeF_L', 'cf_j_leg01_L', 
+            'cf_d_siri_L', 'cf_j_thigh00_L',
+            'cf_d_thigh02_L', 'cf_j_thigh00_L',
+            'cf_d_thigh03_L', 'cf_j_thigh00_L',
+            'cf_d_leg02_L', 'cf_j_leg01_L', 
+            'cf_d_leg03_L', 'cf_j_leg01_L', 
+            'cf_d_shoulder02_R', 'cf_j_arm00_R'
+            'cf_d_arm01_R', 'cf_j_arm00_R', 
+            'cf_d_arm02_R', 'cf_j_arm00_R', 
+            'cf_d_arm03_R', 'cf_j_arm00_R', 
+            'cf_d_forearm02_R', 'cf_j_hand_R', 
+            'cf_d_wrist_R', 'cf_j_hand_R', 
+            'cf_d_kneeF_R', 'cf_j_leg01_R', 
+            'cf_d_siri_R', 'cf_j_thigh00_R', 
+            'cf_d_thigh02_R', 'cf_j_thigh00_R',
+            'cf_d_thigh03_R', 'cf_j_thigh00_R',
+            'cf_d_leg02_R', 'cf_j_leg01_R',
+            'cf_d_leg03_R', 'cf_j_leg01_R',
+
+            'cf_s_waist02', 'cf_j_thigh00_L',
+            'cf_s_waist02', 'cf_j_thigh00_R',
+
+            'cf_s_leg_L', 'cf_j_thigh00_L'
+            'cf_s_leg_R', 'cf_j_thigh00_R'
+
+            'cf_s_kneeB_R',
+            'cf_s_kneeB_R',
+            'cf_s_kneeB_L',
+
+            'cf_d_kneeF_R',
+            'cf_d_kneeF_R',
+            'cf_d_kneeF_L',
+            'cf_d_kneeF_L',
+            'cf_d_siri_R',
+            'cf_d_siri_R',
+            'cf_d_siri_L',
+            'cf_d_siri_L',
+            'cf_d_hand_R',
+            'cf_d_hand_R',
+            'cf_d_hand_L',
+            'cf_d_hand_L',
+            'cf_s_elboback_R', 
+            'cf_s_elboback_R', 
+
+            'cf_s_elbo_R',
+            'cf_s_elbo_R',
+            'cf_s_elboback_L', 
+            'cf_s_elboback_L', 
+            'cf_s_elbo_L', 
+            'cf_s_elbo_L', 
+            'cf_d_shoulder02_R',
+            'cf_d_shoulder02_R',
+            'cf_d_shoulder02_R',
+            'cf_d_shoulder02_L',
+            'cf_d_shoulder02_L',
+            'cf_d_shoulder02_L',
+            'cf_s_leg_R',
+            'cf_s_leg_R',
+            'cf_s_leg_L',
+            'cf_s_leg_L',
+            'cf_s_waist02', 
+            'cf_j_leg03_R',
+            'cf_j_leg03_L',
+            'cf_n_height',
+            'cf_j_shoulder_L',
+            'cf_j_shoulder_R',
+            'cf_j_neck',
+            'cf_j_head',
+            'cf_j_waist01',
+            'cf_j_spine01',
+            'cf_j_spine02',
+            'cf_j_spine03',
+            'cf_j_hips',
+        ]
+
         #  Set roll data
         c.switch(c.get_armature(), 'Edit')
         for bone_name, bone_info in edit_bone_info.items():
             if bone := c.get_armature().data.edit_bones.get(bone_name):
-                bone.matrix = bone_info['worldMatrix'].copy()
+                if bone.name not in ignore_bones:
+                    bone.matrix = bone_info['worldMatrix'].copy()
 
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
@@ -360,6 +470,15 @@ class modify_armature(bpy.types.Operator):
         for bone_name, bone_info in final_bone_info.items():
             if bone := c.get_armature().pose.bones.get(bone_name):
                 bone.scale = bone_info['scale'].copy()
+
+        #if the bone is in the ignore list, set the tail of the bone to be above the head of the bone
+        #or the rest of the IK / driver scripts will break
+        c.switch(c.get_armature(), 'EDIT')
+        for bone_name in ignore_bones:
+            if bone := c.get_armature().data.edit_bones.get(bone_name):
+                bone.tail.z = bone.head.z + 0.1
+        
+        c.switch(c.get_armature(), 'POSE')
 
         bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
@@ -707,6 +826,7 @@ class modify_armature(bpy.types.Operator):
             if armature.data.edit_bones.get(bone):
                 armature.data.edit_bones[bone].roll = reroll_data[bone]
         c.print_timer('set_bone_roll_data')
+    
     def bend_bones_for_iks(self):
         '''slightly modify the armature to support IKs'''
         if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
@@ -1407,10 +1527,10 @@ class modify_armature(bpy.types.Operator):
 
         c.switch(c.get_armature(), 'POSE')
 
-        armhandIK_pose('cf_j_forearm01_R', 'cf_pv_hand_R', 'cf_pv_elbo_R', math.pi / 2, 'cf_j_hand_R')
-        armhandIK_pose('cf_j_forearm01_L', 'cf_pv_hand_L', 'cf_pv_elbo_L', math.pi / 2, 'cf_j_hand_L')
-        legIK_pose('cf_j_leg01_R', 'cf_pv_foot_R', 'cf_pv_knee_R', -math.pi / 2, 'cf_pv_foot_R', 'cf_j_leg01_R','cf_j_toes_R', 'cf_j_foot_R')
-        legIK_pose('cf_j_leg01_L', 'cf_pv_foot_L', 'cf_pv_knee_L', -math.pi / 2, 'cf_pv_foot_L', 'cf_j_leg01_L','cf_j_toes_L', 'cf_j_foot_L')
+        armhandIK_pose('cf_j_forearm01_R', 'cf_pv_hand_R', 'cf_pv_elbo_R', -math.pi / 2, 'cf_j_hand_R')
+        armhandIK_pose('cf_j_forearm01_L', 'cf_pv_hand_L', 'cf_pv_elbo_L', -math.pi / 2, 'cf_j_hand_L')
+        legIK_pose('cf_j_leg01_R', 'cf_pv_foot_R', 'cf_pv_knee_R', math.pi / 2, 'cf_pv_foot_R', 'cf_j_leg01_R','cf_j_toes_R', 'cf_j_foot_R')
+        legIK_pose('cf_j_leg01_L', 'cf_pv_foot_L', 'cf_pv_knee_L', math.pi / 2, 'cf_pv_foot_L', 'cf_j_leg01_L','cf_j_toes_L', 'cf_j_foot_L')
         footIK_pose('cf_j_foot_R', 'cf_j_toes_R', 'cf_pv_foot_R', 'cf_pv_knee_R', 'cf_j_leg01_R', kneedistr)
         footIK_pose('cf_j_foot_L',  'cf_j_toes_L', 'cf_pv_foot_L', 'cf_pv_knee_L', 'cf_j_leg01_L', kneedistl)
 
