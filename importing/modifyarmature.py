@@ -349,112 +349,31 @@ class modify_armature(bpy.types.Operator):
             }
 
         # Don't set the roll data for these bones because they are rotation sensitive bones
-        ignore_bones = [
-            'cf_j_leg01_R', 'cf_j_foot_R',
-            'cf_j_leg01_L', 'cf_j_foot_L',
-            'cf_j_forearm01_R', 'cf_j_hand_R',
-            'cf_j_forearm01_L', 'cf_j_hand_L',
-            'cf_pv_hand_R', 'cf_j_hand_R',
-            'cf_pv_hand_L', 'cf_j_hand_L',
-            'cf_j_foot_R', 'cf_j_toes_R', 
-            'cf_j_foot_L', 'cf_j_toes_L', 
-            'Toes4_L', 'Toes4_L', 'Toes0_L', 'Toes0_L', 'Toes30_L', 'Toes30_L', 'Toes20_L', 
-            'Toes20_L', 'Toes10_L', 'Toes10_L', 'Toes4_R', 'Toes4_R', 'Toes0_R', 'Toes0_R', 
-            'Toes30_R', 'Toes30_R', 'Toes20_R', 'Toes20_R', 'Toes10_R', 'Toes10_R', 'Toes30_L', 
-            'Toes30_L', 'Toes10_L', 'Toes30_L', 'Toes30_L', 'Toes30_L', 'Toes20_L', 'Toes20_L', 
-            'Toes10_L', 'Toes10_L', 'Toes30_R', 'Toes30_R', 'Toes10_R', 'Toes30_R', 'Toes30_R', 
-            'Toes30_R', 'Toes20_R', 'Toes20_R', 'Toes10_R', 'Toes10_R',
-            'cf_j_kokan',
-            'cf_pv_root_upper', 'cf_j_spine01',
-            'cf_pv_elbo_R', 'cf_pv_root_upper',
-            'cf_pv_elbo_L', 'cf_pv_root_upper',
-            'cf_j_forearm01_R', 'cf_pv_hand_R', 'cf_pv_elbo_R',
-            'cf_j_forearm01_L', 'cf_pv_hand_L', 'cf_pv_elbo_L',
-            'cf_j_leg01_R', 'cf_pv_foot_R', 'cf_pv_knee_R',
-            'cf_j_leg01_L', 'cf_pv_foot_L', 'cf_pv_knee_L',
-            'cf_pv_foot_R', 'cf_j_leg01_R', 'cf_j_toes_R', 'cf_j_foot_R',
-            'cf_pv_foot_L', 'cf_j_leg01_L', 'cf_j_toes_L', 'cf_j_foot_L',
-
-            'cf_d_shoulder02_L', 'cf_j_arm00_L'
-            'cf_d_arm01_L', 'cf_j_arm00_L', 
-            'cf_d_arm02_L', 'cf_j_arm00_L', 
-            'cf_d_arm03_L', 'cf_j_arm00_L', 
-            'cf_d_forearm02_L', 'cf_j_hand_L', 
-            'cf_d_wrist_L', 'cf_j_hand_L', 
-            'cf_d_kneeF_L', 'cf_j_leg01_L', 
-            'cf_d_siri_L', 'cf_j_thigh00_L',
-            'cf_d_thigh02_L', 'cf_j_thigh00_L',
-            'cf_d_thigh03_L', 'cf_j_thigh00_L',
-            'cf_d_leg02_L', 'cf_j_leg01_L', 
-            'cf_d_leg03_L', 'cf_j_leg01_L', 
-            'cf_d_shoulder02_R', 'cf_j_arm00_R'
-            'cf_d_arm01_R', 'cf_j_arm00_R', 
-            'cf_d_arm02_R', 'cf_j_arm00_R', 
-            'cf_d_arm03_R', 'cf_j_arm00_R', 
-            'cf_d_forearm02_R', 'cf_j_hand_R', 
-            'cf_d_wrist_R', 'cf_j_hand_R', 
-            'cf_d_kneeF_R', 'cf_j_leg01_R', 
-            'cf_d_siri_R', 'cf_j_thigh00_R', 
-            'cf_d_thigh02_R', 'cf_j_thigh00_R',
-            'cf_d_thigh03_R', 'cf_j_thigh00_R',
-            'cf_d_leg02_R', 'cf_j_leg01_R',
-            'cf_d_leg03_R', 'cf_j_leg01_R',
-
-            'cf_s_waist02', 'cf_j_thigh00_L',
-            'cf_s_waist02', 'cf_j_thigh00_R',
-
-            'cf_s_leg_L', 'cf_j_thigh00_L'
-            'cf_s_leg_R', 'cf_j_thigh00_R'
-
-            'cf_s_kneeB_R',
-            'cf_s_kneeB_R',
-            'cf_s_kneeB_L',
-
-            'cf_d_kneeF_R',
-            'cf_d_kneeF_R',
-            'cf_d_kneeF_L',
-            'cf_d_kneeF_L',
-            'cf_d_siri_R',
-            'cf_d_siri_R',
-            'cf_d_siri_L',
-            'cf_d_siri_L',
-            'cf_d_hand_R',
-            'cf_d_hand_R',
-            'cf_d_hand_L',
-            'cf_d_hand_L',
-            'cf_s_elboback_R', 
-            'cf_s_elboback_R', 
-
-            'cf_s_elbo_R',
-            'cf_s_elbo_R',
-            'cf_s_elboback_L', 
-            'cf_s_elboback_L', 
-            'cf_s_elbo_L', 
-            'cf_s_elbo_L', 
-            'cf_d_shoulder02_R',
-            'cf_d_shoulder02_R',
-            'cf_d_shoulder02_R',
-            'cf_d_shoulder02_L',
-            'cf_d_shoulder02_L',
-            'cf_d_shoulder02_L',
-            'cf_s_leg_R',
-            'cf_s_leg_R',
-            'cf_s_leg_L',
-            'cf_s_leg_L',
-            'cf_s_waist02', 
-            'cf_j_leg03_R',
-            'cf_j_leg03_L',
-            'cf_n_height',
-            'cf_j_shoulder_L',
-            'cf_j_shoulder_R',
-            'cf_j_neck',
-            'cf_j_head',
-            'cf_j_waist01',
-            'cf_j_spine01',
-            'cf_j_spine02',
-            'cf_j_spine03',
-            'cf_j_hips',
-        ]
+        ignore_bones = ('cf_j_leg01_R', 'cf_j_foot_R', 'cf_j_leg01_L', 'cf_j_foot_L', 'cf_j_forearm01_R', 
+            'cf_j_hand_R', 'cf_j_forearm01_L', 'cf_j_hand_L', 'cf_pv_hand_R', 'cf_j_hand_R', 
+            'cf_pv_hand_L', 'cf_j_hand_L', 'cf_j_foot_R', 'cf_j_toes_R', 'cf_j_foot_L', 'cf_j_toes_L', 
+            'Toes4_L', 'Toes4_L', 'Toes0_L', 'Toes0_L', 'Toes30_L', 'Toes30_L', 'Toes20_L', 'Toes20_L', 
+            'Toes10_L', 'Toes10_L', 'Toes4_R', 'Toes4_R', 'Toes0_R', 'Toes0_R', 'Toes30_R', 'Toes30_R', 
+            'Toes20_R', 'Toes20_R', 'Toes10_R', 'Toes10_R', 'Toes30_L', 'Toes30_L', 'Toes10_L', 'Toes30_L', 
+            'Toes30_L', 'Toes30_L', 'Toes20_L', 'Toes20_L', 'Toes10_L', 'Toes10_L', 'Toes30_R', 'Toes30_R', 
+            'Toes10_R', 'Toes30_R', 'Toes30_R', 'Toes30_R', 'Toes20_R', 'Toes20_R', 'Toes10_R', 'Toes10_R', 
+            'cf_j_kokan', 'cf_pv_root_upper', 'cf_j_spine01', 'cf_pv_elbo_R', 'cf_pv_root_upper', 'cf_pv_elbo_L', 
+            'cf_pv_root_upper', 'cf_j_forearm01_R', 'cf_pv_hand_R', 'cf_pv_elbo_R', 'cf_j_forearm01_L', 'cf_pv_hand_L', 
+            'cf_pv_elbo_L', 'cf_j_leg01_R', 'cf_pv_foot_R', 'cf_pv_knee_R', 'cf_j_leg01_L', 'cf_pv_foot_L', 'cf_pv_knee_L', 
+            'cf_pv_foot_R', 'cf_j_leg01_R', 'cf_j_toes_R', 'cf_j_foot_R', 'cf_pv_foot_L', 'cf_j_leg01_L', 'cf_j_toes_L', 
+            'cf_j_foot_L', 'cf_d_shoulder02_L', 'cf_j_arm00_Lcf_d_arm01_L', 'cf_j_arm00_L', 'cf_d_arm02_L', 'cf_j_arm00_L', 
+            'cf_d_arm03_L', 'cf_j_arm00_L', 'cf_d_forearm02_L', 'cf_j_hand_L', 'cf_d_wrist_L', 'cf_j_hand_L', 'cf_d_kneeF_L', 
+            'cf_j_leg01_L', 'cf_d_siri_L', 'cf_j_thigh00_L', 'cf_d_thigh02_L', 'cf_j_thigh00_L', 'cf_d_thigh03_L', 
+            'cf_j_thigh00_L', 'cf_d_leg02_L', 'cf_j_leg01_L', 'cf_d_leg03_L', 'cf_j_leg01_L', 'cf_d_shoulder02_R', 
+            'cf_j_arm00_Rcf_d_arm01_R', 'cf_j_arm00_R', 'cf_d_arm02_R', 'cf_j_arm00_R', 'cf_d_arm03_R', 'cf_j_arm00_R', 
+            'cf_d_forearm02_R', 'cf_j_hand_R', 'cf_d_wrist_R', 'cf_j_hand_R', 'cf_d_kneeF_R', 'cf_j_leg01_R', 'cf_d_siri_R', 
+            'cf_j_thigh00_R', 'cf_d_thigh02_R', 'cf_j_thigh00_R', 'cf_d_thigh03_R', 'cf_j_thigh00_R', 'cf_d_leg02_R', 
+            'cf_j_leg01_R', 'cf_d_leg03_R', 'cf_j_leg01_R', 'cf_s_waist02', 'cf_j_thigh00_L', 'cf_j_thigh00_R', 'cf_s_leg_L', 
+            'cf_s_leg_R', 'cf_s_kneeB_R', 'cf_s_kneeB_L', 'cf_d_kneeF_R', 'cf_d_kneeF_L', 'cf_d_siri_R', 'cf_d_siri_L', 
+            'cf_d_hand_R', 'cf_d_hand_L', 'cf_s_elboback_R', 'cf_s_elbo_R', 'cf_s_elboback_L', 'cf_s_elbo_L', 'cf_d_shoulder02_R', 
+            'cf_d_shoulder02_L', 'cf_s_leg_R', 'cf_s_leg_L', 'cf_s_waist02', 'cf_j_leg03_R', 'cf_j_leg03_L', 'cf_n_height', 
+            'cf_j_shoulder_L', 'cf_j_shoulder_R', 'cf_j_neck', 'cf_j_head', 'cf_j_waist01', 'cf_j_spine01', 'cf_j_spine02', 
+            'cf_j_spine03', 'cf_j_hips', 'cf_hit_head', 'cf_J_Mayu_R', 'cf_d_bust02_R', 'cf_J_Nose_tip')
 
         #  Set roll data
         c.switch(c.get_armature(), 'Edit')
@@ -2187,10 +2106,14 @@ class modify_armature(bpy.types.Operator):
 
             armature.pose.bones["cf_d_bust00"].custom_shape = bpy.data.objects["WidgetBust"]
             armature.pose.bones["cf_d_bust00"].use_custom_shape_bone_size = False
-            armature.pose.bones["cf_j_bust01_L"].custom_shape = bpy.data.objects["WidgetBreastL"]
-            armature.pose.bones["cf_j_bust01_L"].use_custom_shape_bone_size = False
-            armature.pose.bones["cf_j_bust01_R"].custom_shape = bpy.data.objects["WidgetBreastR"]
-            armature.pose.bones["cf_j_bust01_R"].use_custom_shape_bone_size = False
+            armature.pose.bones["cf_j_bust01_L"].custom_shape = bpy.data.objects["WidgetFace"]
+            armature.pose.bones["cf_j_bust01_L"].use_custom_shape_bone_size = True
+            armature.pose.bones["cf_j_bust01_L"].custom_shape_translation[1] = -.07
+            armature.pose.bones["cf_j_bust01_L"].custom_shape_rotation_euler[0] = 1.57
+            armature.pose.bones["cf_j_bust01_R"].custom_shape = bpy.data.objects["WidgetFace"]
+            armature.pose.bones["cf_j_bust01_R"].use_custom_shape_bone_size = True
+            armature.pose.bones["cf_j_bust01_R"].custom_shape_translation[1] = -.07
+            armature.pose.bones["cf_j_bust01_R"].custom_shape_rotation_euler[0] = 1.57
 
             armature.pose.bones["Left shoulder"].custom_shape = bpy.data.objects["WidgetShoulderL"]
             armature.pose.bones["Right shoulder"].custom_shape = bpy.data.objects["WidgetShoulderR"]
