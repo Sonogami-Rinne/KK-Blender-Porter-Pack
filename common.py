@@ -25,7 +25,9 @@ class JsonFileManager:
         for file in Path(bpy.context.scene.kkbp.import_dir).glob('*.json'):
             self.json_files[file.name] = str(file)
 
-        raw_data = self.get_json_file('KK_MaterialDataComplete.json')
+        bpy.context.scene.kkbp.is_svs = file.name.startswith('SVS')
+
+        raw_data = self.get_json_file(f'{get_prefix()}_MaterialDataComplete.json')
 
         for item in raw_data:
             if material_infos := item['MaterialInformation']:
@@ -222,6 +224,10 @@ def get_import_path() -> str:
     '''Returns the import path'''
     return bpy.context.scene.kkbp.import_dir
 
+def is_svs():
+    return bpy.context.scene.kkbp.is_svs
+def get_prefix():
+    return 'SVS' if bpy.context.scene.kkbp.is_svs else 'KK'
 
 def get_material_names(smr_name: str) -> list[str] | None:
     '''Returns a list of the material names this smr object is using'''

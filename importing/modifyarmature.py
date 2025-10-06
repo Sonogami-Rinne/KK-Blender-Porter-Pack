@@ -54,7 +54,8 @@ class modify_armature(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            if compatible_mode := c.json_file_manager.get_json_file("KK_EditBoneInfo.json") is None:
+            is_svs = c.is_svs()
+            if compatible_mode := c.json_file_manager.get_json_file(f"{c.get_prefix()}_EditBoneInfo.json") is None:
                 c.kklog('Use compatible mode')
 
             self.reparent_all_objects()
@@ -63,40 +64,41 @@ class modify_armature(bpy.types.Operator):
             self.scale_armature_bones_down()
             if not compatible_mode:
                 self.rebuild_bone_data()
-            self.reparent_leg_and_body_bone()
 
-
-            self.delete_non_height_bones()
+            if not is_svs:
+                self.reparent_leg_and_body_bone()
+                self.delete_non_height_bones()
 
             if compatible_mode:
                 self.modify_finger_bone_orientations()
                 self.set_bone_roll_data()
 
-            self.bend_bones_for_iks()
+            if not is_svs:
+                self.bend_bones_for_iks()
 
-            self.remove_empty_vertex_groups()
-            self.reorganize_armature_layers()
-            self.move_accessory_bones_to_layer10()
+                self.remove_empty_vertex_groups()
+                self.reorganize_armature_layers()
+                self.move_accessory_bones_to_layer10()
 
-            self.create_eye_reference_bone()
-            self.create_eye_controller_bone()
-            self.shorten_kokan_bone()
-            self.scale_skirt_and_face_bones()
+                self.create_eye_reference_bone()
+                self.create_eye_controller_bone()
+                self.shorten_kokan_bone()
+                self.scale_skirt_and_face_bones()
 
-            self.prepare_ik_bones()
-            if compatible_mode:
-                self.create_ik_bones()
-            else:
-                self.create_f_ik_bones()
+                self.prepare_ik_bones()
+                if compatible_mode:
+                    self.create_ik_bones()
+                else:
+                    self.create_f_ik_bones()
 
-            self.create_joint_drivers()
+                self.create_joint_drivers()
 
-            self.categorize_bones()
-            self.rename_bones_for_clarity()
-            self.rename_mmd_bones()
+                self.categorize_bones()
+                self.rename_bones_for_clarity()
+                self.rename_mmd_bones()
 
-            self.apply_bone_widgets()
-            self.hide_widgets()
+                self.apply_bone_widgets()
+                self.hide_widgets()
 
             return {'FINISHED'}
         except Exception as error:
@@ -332,7 +334,8 @@ class modify_armature(bpy.types.Operator):
     def rebuild_bone_data(self):
         edit_bone_info = {}
         final_bone_info = {}
-        for _bone in c.json_file_manager.get_json_file("KK_EditBoneInfo.json"):
+        prefix = c.get_prefix()
+        for _bone in c.json_file_manager.get_json_file(f"{prefix}_EditBoneInfo.json"):
             world_transform = _bone['worldTransform']
             edit_bone_info[_bone['boneName']] = {
                 'rotation': Quaternion(_bone['rotation']),
@@ -343,7 +346,7 @@ class modify_armature(bpy.types.Operator):
                     [world_transform[12], world_transform[13], world_transform[14], world_transform[15]],
                 ]),
             }
-        for _bone in c.json_file_manager.get_json_file("KK_FinalBoneInfo.json"):
+        for _bone in c.json_file_manager.get_json_file(f"{prefix}_FinalBoneInfo.json"):
             final_bone_info[_bone['boneName']] = {
                 'scale': Vector(_bone['scale']),
             }

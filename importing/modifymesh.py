@@ -30,6 +30,8 @@ class modify_mesh(bpy.types.Operator):
 
     def execute(self, context):
         try:
+            is_svs = c.is_svs()
+            light_dark_mode = is_svs or c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture')
             self.rename_uv_maps()
 
             self.clean_up_duplicates()
@@ -38,17 +40,18 @@ class modify_mesh(bpy.types.Operator):
             self.separate_alternate_clothing()
             self.delete_shad_bone()
 
-            if c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture'):
+            if light_dark_mode and not is_svs:
                 self.delete_eyeline_down()
 
-            self.separate_hitboxes()
-            self.delete_mask_quad()
+            if not is_svs:
+                self.separate_hitboxes()
+                self.delete_mask_quad()
 
-            self.remove_unused_shapekeys()
-            self.translate_shapekeys()
-            self.combine_shapekeys()
-            self.correct_shapekeys()
-            if not c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture'):
+                self.remove_unused_shapekeys()
+                self.translate_shapekeys()
+                self.combine_shapekeys()
+                self.correct_shapekeys()
+            if not light_dark_mode:
                 self.create_tear_shapekeys()
                 self.create_gag_eye_shapekeys()
 

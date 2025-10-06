@@ -67,7 +67,8 @@ class modify_material(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            modify_material.export_light_dark_material = c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture')
+            is_svs = c.is_svs()
+            modify_material.export_light_dark_material = is_svs or c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture')
 
             self.load_materials()
             self.remove_unused_material_slots()
@@ -81,7 +82,8 @@ class modify_material(bpy.types.Operator):
                 self.replace_materials_for_hair()
                 self.replace_materials_for_outfits()
 
-            self.replace_materials_for_tears_tongue_gageye()
+            if not is_svs:
+                self.replace_materials_for_tears_tongue_gageye()
 
             if not modify_material.export_light_dark_material:
                 self.remove_duplicate_node_groups()
@@ -94,7 +96,8 @@ class modify_material(bpy.types.Operator):
                 self.create_dark_textures()
 
             self.import_and_setup_smooth_normals()
-            self.setup_gag_eye_material_drivers()
+            if not is_svs:
+                self.setup_gag_eye_material_drivers()
 
             if not modify_material.export_light_dark_material:
                 self.add_outlines_to_body()
@@ -562,10 +565,12 @@ class modify_material(bpy.types.Operator):
                     'This image was not automatically loaded in because its filename exceeds 64 characters: ' + file.name, type='error')
 
     def ELDT_replace_materials_and_link_textures_adjust_UV(self):
+        prefix = c.get_prefix()
+        is_svs = c.is_svs()
         c.import_from_library_file(category='Material', list_of_items=["KK Light Dark Texture"], use_fake_user=True)
         textures = ["_light.png", "_dark.png", "_NMP_CNV.png", "_NMPD_CNV.png", "_AM.png"]
 
-        UV_adjustments = c.json_file_manager.get_json_file("KK_UVAdjustments.json")
+        UV_adjustments = c.json_file_manager.get_json_file(f"{prefix}_UVAdjustments.json")
         meshes = [('body', c.get_body()), ('tongue', c.get_tongue())]
 
         def swap_mesh_material(original_material: str, target_material: str, mesh_type: str, mesh):
@@ -578,7 +583,7 @@ class modify_material(bpy.types.Operator):
                 template['name'] = c_name
                 template['id'] = original_material
                 template['bake'] = False
-                template.name = 'KK ' + original_material
+                template.name = prefix + ' ' + original_material
                 mesh.material_slots[original_material].material = template
                 # template_group = template.node_tree.nodes['textures'].node_tree.copy()
                 # template_group.name = 'Tex ' + original_material + ' ' + c_name
@@ -596,6 +601,8 @@ class modify_material(bpy.types.Operator):
         record = {}
         bm = bmesh.new()
         for mesh_type, mesh in meshes:
+            if mesh is None:
+                continue
             c.switch(mesh, 'OBJECT')
             if mesh.data.uv_layers is None:
                 continue
@@ -611,7 +618,7 @@ class modify_material(bpy.types.Operator):
                         material = mesh.material_slots[material_index].material
                         material.node_tree.nodes["UV Scale"].inputs[3].default_value[0] = entry['xScale']
                         material.node_tree.nodes["UV Scale"].inputs[3].default_value[1] = entry['yScale']
-                        material.node_tree.nodes["AlphaMask Stage Switch"].outputs[0].default_value = 0 if entry['AlphaMaskAStage'][index] == 0 else 2
+                        material.node_tree.nodes["AlphaMask Stage Switch"].outputs[0].default_value = 0 if (is_svs or entry['AlphaMaskAStage'][index] == 0) else 2
 
                         for texture_name in textures:
                             if image := bpy.data.images.get(material_name + texture_name):
@@ -633,15 +640,16 @@ class modify_material(bpy.types.Operator):
 
             #  Replace mesh's materials that do not show in the list to transparent
             for material_slot in mesh.material_slots:
-                if not material_slot.material.name.startswith('KK '):
-                    swap_mesh_material(material_slot.material.name, 'KK Transparent', mesh_type, mesh)
+                if not material_slot.material.name.startswith(prefix):
+                    swap_mesh_material(material_slot.material.name, f'KK Transparent', mesh_type, mesh)
 
         # Do not forget tongue.001
-        if (material_index := c.get_tongue().material_slots.find('cf_m_tang.001')) >= 0:
-            swap_mesh_material('cf_m_tang.001', 'KK Light Dark Texture', 'tongue', c.get_tongue())
-            for texture_name in textures:
-                if image := bpy.data.images.get('cf_m_tang' + texture_name):
-                    c.get_tongue().material_slots[material_index].material.node_tree.nodes[texture_name] = image
+        if not c.is_svs():
+            if (material_index := c.get_tongue().material_slots.find('cf_m_tang.001')) >= 0:
+                swap_mesh_material('cf_m_tang.001', 'KK Light Dark Texture', 'tongue', c.get_tongue())
+                for texture_name in textures:
+                    if image := bpy.data.images.get('cf_m_tang' + texture_name):
+                        c.get_tongue().material_slots[material_index].material.node_tree.nodes[texture_name] = image
 
         # force to update
         bpy.context.view_layer.update()

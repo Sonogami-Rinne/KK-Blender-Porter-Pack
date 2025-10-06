@@ -15,6 +15,8 @@ class PlaceholderProperties(PropertyGroup):
     #this will let the plugin know where to look for texture / json data
     import_dir: StringProperty(default='')
 
+    is_svs: BoolProperty(default=False)
+
     #this will let the plugin know where the user is in the import / export process
     plugin_state:StringProperty(default='')
 
