@@ -570,7 +570,7 @@ class modify_material(bpy.types.Operator):
         c.import_from_library_file(category='Material', list_of_items=["KK Light Dark Texture"], use_fake_user=True)
         textures = ["_light.png", "_dark.png", "_NMP_CNV.png", "_NMPD_CNV.png", "_AM.png"]
 
-        UV_adjustments = c.json_file_manager.get_json_file(f"{prefix}_UVAdjustments.json")
+        target_materials = c.json_file_manager.get_json_file(f"{prefix}_LightDarkMaterials.json")
         meshes = [('body', c.get_body()), ('tongue', c.get_tongue())]
 
         def swap_mesh_material(original_material: str, target_material: str, mesh_type: str, mesh):
@@ -598,45 +598,25 @@ class modify_material(bpy.types.Operator):
         for outfit in c.get_outfits():
             meshes.append(('outfit', outfit))
 
-        record = {}
-        bm = bmesh.new()
         for mesh_type, mesh in meshes:
             if mesh is None:
                 continue
             c.switch(mesh, 'OBJECT')
             if mesh.data.uv_layers is None:
                 continue
-            bm.clear()
-            bm.from_mesh(mesh.data)
-            for entry in UV_adjustments:
-                for index, material_name in enumerate(entry['materials']):
-                    if (material_index := mesh.material_slots.find(material_name)) >= 0:
-                        record[material_index] = (entry['xOffset'], entry['yOffset'], entry['xScale'], entry['yScale'])
-                        # Update the shader
+            for material_name in target_materials:
+                if (material_index := mesh.material_slots.find(material_name)) >= 0:
+                    # Update the shader
 
-                        swap_mesh_material(material_name, 'KK Light Dark Texture', mesh_type, mesh)
-                        material = mesh.material_slots[material_index].material
-                        material.node_tree.nodes["UV Scale"].inputs[3].default_value[0] = entry['xScale']
-                        material.node_tree.nodes["UV Scale"].inputs[3].default_value[1] = entry['yScale']
-                        material.node_tree.nodes["AlphaMask Stage Switch"].outputs[0].default_value = 0 if (is_svs or entry['AlphaMaskAStage'][index] == 0) else 2
+                    swap_mesh_material(material_name, 'KK Light Dark Texture', mesh_type, mesh)
+                    material = mesh.material_slots[material_index].material
+                    material.node_tree.nodes["AlphaMask Stage Switch"].outputs[0].default_value = 2
 
-                        for texture_name in textures:
-                            if image := bpy.data.images.get(material_name + texture_name):
-                                material.node_tree.nodes[texture_name].image = image
-                        material.node_tree.update_tag()
+                    for texture_name in textures:
+                        if image := bpy.data.images.get(material_name + texture_name):
+                            material.node_tree.nodes[texture_name].image = image
+                    material.node_tree.update_tag()
 
-            if not (uv_bm_layer := bm.loops.layers.uv.active):
-                continue
-            # UV transform
-            for vert in bm.verts:
-                for loop in vert.link_loops:
-                    if adjustment_info := record.get(loop.face.material_index):
-                        uv = loop[uv_bm_layer].uv
-                        uv.x = (uv.x + adjustment_info[0]) / adjustment_info[2]
-                        uv.y = (uv.y + adjustment_info[1]) / adjustment_info[3]
-            record.clear()
-            bm.to_mesh(mesh.data)
-            mesh.data.update()
 
             #  Replace mesh's materials that do not show in the list to transparent
             for material_slot in mesh.material_slots:
