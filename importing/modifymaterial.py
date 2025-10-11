@@ -927,7 +927,7 @@ class modify_material(bpy.types.Operator):
         try:
             #import all the node groups
             body = c.get_body()
-            c.import_from_library_file('NodeTree', ['.Raw Shading (smooth normals)', '.Raw Shading (smooth body normals)', '.Smooth Normals', '.Other Smooth Normals'], bpy.context.scene.kkbp.use_material_fake_user)
+            c.import_from_library_file('NodeTree', ['.Raw Shading (smooth normals)', '.Raw Shading (smooth body normals)', '.Smooth Normals', '.Other Smooth Normals'], True)
             c.switch(body, 'object')
             geo_nodes = body.modifiers.new(name = 'Normal Smoothing', type = 'NODES')
             geo_nodes.node_group = bpy.data.node_groups['.Smooth Normals']
@@ -1190,7 +1190,7 @@ class modify_material(bpy.types.Operator):
     @classmethod
     def load_luts(cls):
         self = cls
-        self.lut_selection = bpy.context.scene.kkbp.colors_dropdown
+        # self.lut_selection = bpy.context.scene.kkbp.colors_dropdown
         self.lut_light = 'Lut_TimeDay.png'
 
         self.lut_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.lut_light)

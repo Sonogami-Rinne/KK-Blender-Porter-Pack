@@ -46,19 +46,19 @@ class kkbp_import(bpy.types.Operator):
         #save filepath for later
         bpy.context.scene.kkbp.import_dir = str(self.filepath)[:-9] if self.filepath else bpy.context.scene.kkbp.import_dir
 
-        #delete the cached files if the option is enabled
-        if bpy.context.scene.kkbp.delete_cache and c.get_import_path():
-            c.kklog('Clearing the cache folder...')
-            for cache_folder in ['atlas_files', 'baked_files', 'dark_files', 'saturated_files']:
-                try:
-                    for f in os.listdir(os.path.join(c.get_import_path(), cache_folder)):
-                        try:
-                            os.remove(os.path.join(c.get_import_path(), cache_folder, f))
-                        except:
-                            pass
-                except:
-                    #that cache folder did not exist
-                    pass
+        # #delete the cached files if the option is enabled
+        # if bpy.context.scene.kkbp.delete_cache and c.get_import_path():
+        #     c.kklog('Clearing the cache folder...')
+        #     for cache_folder in ['atlas_files', 'baked_files', 'dark_files', 'saturated_files']:
+        #         try:
+        #             for f in os.listdir(os.path.join(c.get_import_path(), cache_folder)):
+        #                 try:
+        #                     os.remove(os.path.join(c.get_import_path(), cache_folder, f))
+        #                 except:
+        #                     pass
+        #         except:
+        #             #that cache folder did not exist
+        #             pass
 
         #check if there is at least one "Outfit ##" folder inside of this directory
         #   if there isn't, then the user incorrectly chose the .pmx file inside of the outfit directory
@@ -91,9 +91,9 @@ class kkbp_import(bpy.types.Operator):
             if force_current_pose:
                 bpy.context.scene.kkbp.armature_dropdown = 'C'
 
-        #force no dark colors if Cycles classic is chosen as the shader (this mode does not use dark colors at all)
-        if bpy.context.scene.kkbp.shader_dropdown == 'D':
-            bpy.context.scene.kkbp.colors_dropdown = False
+        # #force no dark colors if Cycles classic is chosen as the shader (this mode does not use dark colors at all)
+        # if bpy.context.scene.kkbp.shader_dropdown == 'D':
+        #     bpy.context.scene.kkbp.colors_dropdown = False
 
         functions = [
                 lambda:bpy.ops.kkbp.modifymesh('INVOKE_DEFAULT'),
