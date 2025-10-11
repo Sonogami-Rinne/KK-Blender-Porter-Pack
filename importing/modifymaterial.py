@@ -77,6 +77,7 @@ class modify_material(bpy.types.Operator):
             if modify_material.export_light_dark_material:
                 self.ELDT_load_images()
                 self.ELDT_replace_materials_and_link_textures_adjust_UV()
+                self.SVS_set_body_alpha_mask()
             else:
                 self.replace_materials_for_body()
                 self.replace_materials_for_hair()
@@ -151,7 +152,8 @@ class modify_material(bpy.types.Operator):
             'Outline General',
             'Outline Body',
             'KK Light Dark Texture',
-            'KK Transparent'
+            'KK Transparent',
+            'SVS Light Dark Texture'
         ]
         c.import_from_library_file(category='Material', list_of_items=templateList, use_fake_user=True)
     # %% Main functions
@@ -555,6 +557,11 @@ class modify_material(bpy.types.Operator):
         files.extend(list(file_dir.rglob('*_AM.png')))
         files.extend(list(file_dir.rglob('*_NMP_CNV.png')))
         files.extend(list(file_dir.rglob('*_NMPD_CNV.png')))
+        files.extend(list(file_dir.rglob('*_Cloth_alpha.png')))
+        files.extend(list(file_dir.rglob('*_Cloth_alpha_bot.png')))
+        files.extend(list(file_dir.rglob('*_Normal_map.png')))
+        files.extend(list(file_dir.rglob('*_Normal.png')))
+        files.extend(list(file_dir.rglob('*_DetailNormal.png')))
 
         for file in files:
             bpy.ops.image.open(filepath=str(file), use_udim_detecting=False)
@@ -567,8 +574,20 @@ class modify_material(bpy.types.Operator):
     def ELDT_replace_materials_and_link_textures_adjust_UV(self):
         prefix = c.get_prefix()
         is_svs = c.is_svs()
-        c.import_from_library_file(category='Material', list_of_items=["KK Light Dark Texture"], use_fake_user=True)
-        textures = ["_light.png", "_dark.png", "_NMP_CNV.png", "_NMPD_CNV.png", "_AM.png"]
+
+        remap = {
+            '_light.png': '_light.png',
+            '_dark.png': '_dark.png',
+            '_NMP_CNV.png': '_NMP_CNV.png',
+            '_NMPD_CNV.png': '_NMPD_CNV.png',
+            '_AM.png': '_AM.png',
+            '_Normal_map.png': '_NMP_CNV.png',
+            '_Normal.png': '_NMP_CNV.png',
+            '_DetailNormal.png': '_NMPD_CNV.png'
+        }
+
+        # c.import_from_library_file(category='Material', list_of_items=["KK Light Dark Texture"], use_fake_user=True)
+        textures = list(remap.keys())
 
         target_materials = c.json_file_manager.get_json_file(f"{prefix}_LightDarkMaterials.json")
         meshes = [('body', c.get_body()), ('tongue', c.get_tongue())]
@@ -608,13 +627,13 @@ class modify_material(bpy.types.Operator):
                 if (material_index := mesh.material_slots.find(material_name)) >= 0:
                     # Update the shader
 
-                    swap_mesh_material(material_name, 'KK Light Dark Texture', mesh_type, mesh)
+                    swap_mesh_material(material_name, f'{prefix} Light Dark Texture', mesh_type, mesh)
                     material = mesh.material_slots[material_index].material
                     material.node_tree.nodes["AlphaMask Stage Switch"].outputs[0].default_value = 2
 
                     for texture_name in textures:
                         if image := bpy.data.images.get(material_name + texture_name):
-                            material.node_tree.nodes[texture_name].image = image
+                            material.node_tree.nodes[remap[texture_name]].image = image
                     material.node_tree.update_tag()
 
 
@@ -624,7 +643,7 @@ class modify_material(bpy.types.Operator):
                     swap_mesh_material(material_slot.material.name, f'KK Transparent', mesh_type, mesh)
 
         # Do not forget tongue.001
-        if not c.is_svs():
+        if not is_svs:
             if (material_index := c.get_tongue().material_slots.find('cf_m_tang.001')) >= 0:
                 swap_mesh_material('cf_m_tang.001', 'KK Light Dark Texture', 'tongue', c.get_tongue())
                 for texture_name in textures:
@@ -634,6 +653,29 @@ class modify_material(bpy.types.Operator):
         # force to update
         bpy.context.view_layer.update()
         bpy.context.evaluated_depsgraph_get().update()
+
+    def SVS_set_body_alpha_mask(self):
+        if not c.is_svs():
+            return
+        file_dir = Path(bpy.context.scene.kkbp.import_dir)
+        material_name = c.json_file_manager.get_material_info_by_smr('o_body')[0]['MaterialInformation'][0]['MaterialName']
+        material = c.get_body().material_slots.get('SVS ' + material_name).material
+
+        # if files := list(file_dir.rglob('*_Cloth_alpha.png')):
+        #     for fi in files:
+        #
+        for file in file_dir.rglob('*_Cloth_alpha.png'):
+            if image := bpy.data.images.get(file.name):
+                material.node_tree.nodes['_AM.png'].image = image
+                break
+
+        for file in file_dir.rglob('*_Cloth_alpha_bot.png'):
+            if image := bpy.data.images.get(file.name):
+                material.node_tree.nodes['_AMB.png'].image = image
+                break
+
+        material.node_tree.update_tag()
+
 
     def link_textures_for_face_body(self):
         '''Load all body textures into their texture slots'''
