@@ -51,7 +51,6 @@ class modify_mesh(bpy.types.Operator):
                 self.translate_shapekeys()
                 self.combine_shapekeys()
                 self.correct_shapekeys()
-            if not light_dark_mode:
                 self.create_tear_shapekeys()
                 self.create_gag_eye_shapekeys()
 
@@ -433,9 +432,6 @@ class modify_mesh(bpy.types.Operator):
         #Emotions extra
             "_s_":                  "_small_",
             "_l_":                  "_big_",
-
-            #Emotions Yelan headmod exception
-            'T_Default':            '_default_op',
         }
 
         c.get_body().active_shape_key_index = 0
@@ -501,7 +497,7 @@ class modify_mesh(bpy.types.Operator):
         inUse = []
         #These mouth shapekeys require the default teeth and tongue shapekeys to be active
         correctionList = ['_u_small_op', '_u_big_op', '_e_big_op', '_o_small_op', '_o_big_op', '_neko_op', '_triangle_op']
-        shapekey_block = bpy.data.shape_keys[c.get_body().data.shape_keys.name].key_blocks
+        shapekey_block = c.get_body().data.shape_keys.key_blocks
 
         ACTIVE = 0.9
         def activate_shapekey(key_act):
@@ -574,9 +570,9 @@ class modify_mesh(bpy.types.Operator):
                     bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
         #Delete all shapekeys that don't have a "KK" in their name
         #Don't delete the Basis shapekey though
-        #If no KK shapekeys were generated, something went wrong so don't delete any shapekeys
+        #If not all of the KK shapekeys were generated, something went wrong so don't delete any shapekeys
         # keep_partial_shapekeys = bpy.context.scene.kkbp.shapekeys_dropdown == 'B'
-        it_worked = True if [key for key in shapekey_block if 'KK ' in key.name] else False
+        it_worked = len([key for key in shapekey_block if 'KK Eyes' in key.name]) > 25 and len([key for key in shapekey_block if 'KK Mouth' in key.name]) > 50
         if it_worked:
             for remove_shapekey in shapekey_block:
                 try:
@@ -586,7 +582,7 @@ class modify_mesh(bpy.types.Operator):
                     c.kklog('Couldn\'t remove shapekey ' + remove_shapekey.name, 'error')
                     pass
         else:
-            c.kklog('Original shapekeys were not deleted', 'warn')
+            c.kklog('All shapekeys did not generate. Partial shapekeys will not be deleted', 'warn')
         #make the basis shapekey active
         c.get_body().active_shape_key_index = 0
         #and reset the pivot point to median

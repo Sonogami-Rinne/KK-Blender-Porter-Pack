@@ -88,14 +88,13 @@ class modify_material(bpy.types.Operator):
 
             if not modify_material.export_light_dark_material:
                 self.remove_duplicate_node_groups()
-
                 self.load_images()
                 self.link_textures_for_face_body()
                 self.link_textures_for_hair()
                 self.link_textures_for_clothes()
-                self.link_textures_for_tongue_tear_gag()
                 self.create_dark_textures()
 
+            self.link_textures_for_tongue_tear_gag()
             self.import_and_setup_smooth_normals()
             if not is_svs:
                 self.setup_gag_eye_material_drivers()
@@ -562,6 +561,8 @@ class modify_material(bpy.types.Operator):
         files.extend(list(file_dir.rglob('*_Normal_map.png')))
         files.extend(list(file_dir.rglob('*_Normal.png')))
         files.extend(list(file_dir.rglob('*_DetailNormal.png')))
+        files.extend(list(file_dir.rglob('cf_m_gageye_0*.png')))
+        files.extend(list(file_dir.rglob('cf_m_namida_00_MT_CT.png')))
 
         for file in files:
             bpy.ops.image.open(filepath=str(file), use_udim_detecting=False)
@@ -869,33 +870,33 @@ class modify_material(bpy.types.Operator):
         c.print_timer('link_textures_for_clothes')
 
     def link_textures_for_tongue_tear_gag(self):
-        if c.get_tongue() and not modify_material.export_light_dark_material:
-            tongue_mat = c.get_material_names('o_tang')
-            tongue_mat = tongue_mat if tongue_mat else ['cf_m_tang'] #check for bugged/missing SMR Tongue data
-            self.image_load('Tongue', '_CM.png', node_override='_ST_CT.png') #done on purpose
-            self.image_load('Tongue', '_CM.png', node_override='_ST_DT.png') #still done on purpose
-            self.image_load('Tongue', '_CM.png')
-            self.image_load('Tongue', '_DM.png')
-            self.image_load('Tongue', '_NMP.png')
-            self.image_load('Tongue', '_NMP_CNV.png', node_override = '_NMPD_CNV.png') #load regular map by default
-            self.image_load('Tongue', '_NMPD_CNV.png') #then the detail map if it's there
+        # if c.get_tongue() and not modify_material.export_light_dark_material:
+        #     tongue_mat = c.get_material_names('o_tang')
+        #     tongue_mat = tongue_mat if tongue_mat else ['cf_m_tang'] #check for bugged/missing SMR Tongue data
+        #     self.image_load('Tongue', '_CM.png', node_override='_ST_CT.png') #done on purpose
+        #     self.image_load('Tongue', '_CM.png', node_override='_ST_DT.png') #still done on purpose
+        #     self.image_load('Tongue', '_CM.png')
+        #     self.image_load('Tongue', '_DM.png')
+        #     self.image_load('Tongue', '_NMP.png')
+        #     self.image_load('Tongue', '_NMP_CNV.png', node_override = '_NMPD_CNV.png') #load regular map by default
+        #     self.image_load('Tongue', '_NMPD_CNV.png') #then the detail map if it's there
 
         #load all gag eye textures if it exists
         if c.get_gags():
-            self.image_load('Gag00', '_cf_t_gageye_00_ST_CT.png')
-            self.image_load('Gag00', '_cf_t_gageye_02_ST_CT.png')
-            self.image_load('Gag00', '_cf_t_gageye_04_ST_CT.png')
-            self.image_load('Gag00', '_cf_t_gageye_05_ST_CT.png')
-            self.image_load('Gag00', '_cf_t_gageye_06_ST_CT.png')
-            self.image_load('Gag01', '_cf_t_gageye_03_ST_CT.png')
-            self.image_load('Gag01', '_cf_t_gageye_01_ST_CT.png')
-            self.image_load('Gag02', '_cf_t_gageye_07_ST_CT.png')
-            self.image_load('Gag02', '_cf_t_gageye_08_ST_CT.png')
-            self.image_load('Gag02', '_cf_t_gageye_09_ST_CT.png')
+            self.image_load('Gag00', '_cf_t_gageye_00_MT_CT.png')
+            self.image_load('Gag00', '_cf_t_gageye_02_MT_CT.png')
+            self.image_load('Gag00', '_cf_t_gageye_04_MT_CT.png')
+            self.image_load('Gag00', '_cf_t_gageye_05_MT_CT.png')
+            self.image_load('Gag00', '_cf_t_gageye_06_MT_CT.png')
+            self.image_load('Gag01', '_cf_t_gageye_03_MT_CT.png')
+            self.image_load('Gag01', '_cf_t_gageye_01_MT_CT.png')
+            self.image_load('Gag02', '_cf_t_gageye_07_MT_CT.png')
+            self.image_load('Gag02', '_cf_t_gageye_08_MT_CT.png')
+            self.image_load('Gag02', '_cf_t_gageye_09_MT_CT.png')
 
         #load the tears texture in
         if c.get_tears():
-            self.image_load('Tears', '_ST_CT.png')
+            self.image_load('Tears', '_MT_CT.png')
 
         c.print_timer('link_textures_for_tongue_tear_gag')
 
