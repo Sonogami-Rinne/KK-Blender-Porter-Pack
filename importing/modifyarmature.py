@@ -201,7 +201,6 @@ class modify_armature(bpy.types.Operator):
 
     def reparent_leg_and_body_bone(self):
         '''Reparent the leg bone to match the koikatsu armature. Unparent the body_bone bone to match koikatsu armature'''
-        # if bpy.context.scene.kkbp.armature_dropdown != 'D':
         armature = c.get_armature()
         c.switch(armature, 'EDIT')
         #reparent foot to leg03
@@ -225,9 +224,6 @@ class modify_armature(bpy.types.Operator):
             except:
                 #This is the last bone in the chain
                 return
-        # if bpy.context.scene.kkbp.armature_dropdown == 'D':
-        #     select_children(armature.data.edit_bones['BodyTop'])
-        # else:
         select_children(armature.data.edit_bones['cf_n_height'])
         #make sure these bones aren't deleted
         for preserve_bone in ['cf_j_root', 'p_cf_body_bone', 'cf_n_height']:
@@ -751,8 +747,6 @@ class modify_armature(bpy.types.Operator):
     
     def bend_bones_for_iks(self):
         '''slightly modify the armature to support IKs'''
-        # if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
-        #     return
         
         armature = c.get_armature()
         c.switch(armature, 'edit')
@@ -1012,8 +1006,6 @@ class modify_armature(bpy.types.Operator):
 
     def visually_connect_bones(self):
         '''make sure certain bones are visually connected'''
-        # if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
-        #     return
         armature = c.get_armature()
         c.switch(armature, 'edit')
         # Make sure all toe bones are visually correct if using the better penetration armature 
@@ -1050,8 +1042,6 @@ class modify_armature(bpy.types.Operator):
 
     def shorten_kokan_bone(self):
         '''make the kokan bone shorter if it's on the armature'''
-        # if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
-        #     return
         armature = c.get_armature()
         c.switch(armature, 'edit')
         if armature.data.edit_bones.get('cf_j_kokan'):
@@ -1060,10 +1050,6 @@ class modify_armature(bpy.types.Operator):
 
     def scale_skirt_and_face_bones(self):
         '''scales skirt bones and face bones down. Scales BP bones down if exists'''
-
-        #skip this operation if this is the pmx or koikatsu armature
-        # if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
-        #     return
         
         armature = c.get_armature()
         c.switch(armature, 'pose')
@@ -1141,8 +1127,6 @@ class modify_armature(bpy.types.Operator):
 
     def create_eye_reference_bone(self):
         '''Create a bone called "Eyesx that will act as a fixed reference bone for the Eye controller" '''
-        # if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
-        #     return
         armature = c.get_armature()
         c.switch(armature, 'edit')       
         new_bone = armature.data.edit_bones.new('Eyesx')
@@ -1155,8 +1139,6 @@ class modify_armature(bpy.types.Operator):
         c.print_timer('create_eye_reference_bone')
 
     def create_eye_controller_bone(self):
-        # if not bpy.context.scene.kkbp.armature_dropdown in ['A', 'B']:
-        #     return
         armature = c.get_armature()
         c.switch(armature, 'edit')
     
@@ -1197,8 +1179,6 @@ class modify_armature(bpy.types.Operator):
 
     def prepare_ik_bones(self):
         '''reparents some bones to work for IK'''
-        # if not bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
-        #     return
         #Select the armature and make it active
         armature = c.get_armature()
         c.switch(armature, 'edit')
@@ -1223,8 +1203,6 @@ class modify_armature(bpy.types.Operator):
         # After rebuild_bone_data, bones are no longer vertical but are now aligned horizontally along the Y-axis.
         # So former code are not compatible
         # I'm not familiar with IK, so I just tweaked the parameters to make it look as normal as possible.
-        # if not bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
-        #     return
 
         kneedistl = [1]
         kneedistr = [1]
@@ -1522,8 +1500,6 @@ class modify_armature(bpy.types.Operator):
 
     def create_ik_bones(self):
         '''give the leg a foot IK, the foot a heel controller, and the arm a hand IK'''
-        # if not bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
-        #     return
         
         def legIK(legbone, IKtarget, IKpole, IKpoleangle, footIK, kneebone, toebone, footbone):
             bone = c.get_armature().pose.bones[legbone]
@@ -1773,8 +1749,6 @@ class modify_armature(bpy.types.Operator):
 
     def create_joint_drivers(self):
         '''There are several joint corrections that use the cf_d_ and cf_s_ bones on the armature. This function attempts to replicate them using blender drivers and bone constraints'''
-        # if not bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
-        #     return
         armature = c.get_armature()
         c.switch(armature, 'pose')
         #generic function to set a copy rotation modifier
@@ -1914,18 +1888,6 @@ class modify_armature(bpy.types.Operator):
         setDriver('cf_s_kneeB_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '-0.2', expresstype = 'moveexp')
         setDriver('cf_s_kneeB_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.08')
 
-        #knee correction to thicken the knee in a kneeling pose if the rigify armature is being used
-        # if bpy.context.scene.kkbp.armature_dropdown == 'B' and bpy.context.scene.kkbp.categorize_dropdown in ['A', 'B', 'C']:
-        #     setDriver('cf_s_leg01_R', 'scale', 2, 'cf_j_leg01_R', 'ROT_X',  '1',  expresstype = 'scale')
-        #     setDriver('cf_s_leg01_R', 'scale', 0, 'cf_j_leg01_R', 'ROT_X',  '-2', expresstype = 'scale')
-        #     setDriver('cf_s_leg01_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '0.05', expresstype='quat')
-        #     setDriver('cf_d_thigh03_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',   '.015')
-
-        #     setDriver('cf_s_leg01_L', 'scale', 2, 'cf_j_leg01_L', 'ROT_X',  '1', expresstype = 'scale')
-        #     setDriver('cf_s_leg01_L', 'scale', 0, 'cf_j_leg01_L', 'ROT_X',  '-2', expresstype = 'scale')
-        #     setDriver('cf_s_leg01_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '0.05', expresstype='quat')
-        #     setDriver('cf_d_thigh03_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-.015')
-
         #knee tip corrections go up toward the waist and in toward the body, also rotate a bit
         setDriver('cf_d_kneeF_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.02')
         setDriver('cf_d_kneeF_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.04')
@@ -1980,7 +1942,6 @@ class modify_armature(bpy.types.Operator):
 
     def categorize_bones(self):
         '''Add some bones to bone groups to give them colors'''
-        # if bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
         armature = c.get_armature()
         c.switch(armature, 'pose')
         if bpy.app.version[0] == 3:
@@ -2020,7 +1981,6 @@ class modify_armature(bpy.types.Operator):
 
     def rename_bones_for_clarity(self):
         '''rename core bones for easier identification. Also allows Unity to automatically detect each bone in a humanoid armature'''
-        # if bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
         unity_rename_dict = {
         'cf_n_height':'Center',
         'cf_j_hips':'Hips',
@@ -2094,7 +2054,6 @@ class modify_armature(bpy.types.Operator):
 
     def apply_bone_widgets(self):
         '''apply custom bone shapes from library file'''
-        # if bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
         #Import custom bone shapes
         c.import_from_library_file('Collection', ['Bone Widgets'], use_fake_user=False)
     
@@ -2230,7 +2189,6 @@ class modify_armature(bpy.types.Operator):
 
     def hide_widgets(self):
         '''automatically hide bone widgets collection if it's visible'''
-        # if bpy.context.scene.kkbp.armature_dropdown in ['A','B']:
         c.show_layer_collection('Bone Widgets', False)
 
     def only_show_core_armature_bones(self):

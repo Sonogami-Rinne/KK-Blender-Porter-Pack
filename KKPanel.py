@@ -54,10 +54,8 @@ class PlaceholderProperties(PropertyGroup):
 
     armature_dropdown : EnumProperty(
         items=(
-            ("A", t('arm_drop_A'), t('arm_drop_A_tt')),
-            ("B", t('arm_drop_B'), t('arm_drop_B_tt')),
-            # ("C", t('arm_drop_C'), t('arm_drop_C_tt')),
-            # ("D", t('arm_drop_D'), t('arm_drop_D_tt')),
+            ("Rigify", t('arm_drop_A'), t('arm_drop_A_tt')),
+            ("FK", t('arm_drop_B'), t('arm_drop_B_tt')),
         ), name="", default=bpy.context.preferences.addons[__package__].preferences.armature_dropdown, description=t('arm_drop'))
 
     categorize_dropdown : EnumProperty(
@@ -281,12 +279,10 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         row = col.row(align=True)
         row.operator('kkbp.exportprep', text = t('prep'), icon = 'MODIFIER')
-        # row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown in ['A', 'C', 'D']
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.prop(context.scene.kkbp, "simp_dropdown")
         split.prop(context.scene.kkbp, "prep_dropdown")
-        # row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown in ['A', 'C', 'D']
         row = col.row(align=True)
         split = row.split(align=True, factor=0.33)
         if globs.pil_exist == 'no':
@@ -336,24 +332,20 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text = t('single_animation'))
         split.operator('kkbp.importanimation', text = '', icon = 'ARMATURE_DATA')
-        # row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'B'
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="")
         split.prop(context.scene.kkbp, "animation_import_type", toggle=True, text = t('animation_mix') if scene.animation_import_type else t('animation_koi'))
-        # row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'B'
 
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('animation_library'))
         split.operator('kkbp.createanimassetlib', text = '', icon = 'ARMATURE_DATA')
-        # row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'B'
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="")
         split.prop(context.scene.kkbp, "animation_library_scale", toggle=True, text = t('animation_library_scale'))
-        # row.enabled = scene.plugin_state in ['imported'] and bpy.context.scene.kkbp.armature_dropdown == 'B'
 
         # col = box.column(align=True)
         # row = col.row(align=True)

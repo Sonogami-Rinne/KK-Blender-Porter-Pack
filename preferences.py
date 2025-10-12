@@ -34,11 +34,9 @@ class KKBPPreferences(bpy.types.AddonPreferences):
 
     armature_dropdown : EnumProperty(
         items=(
-            ("A", t('arm_drop_A'), t('arm_drop_A_tt')),
-            ("B", t('arm_drop_B'), t('arm_drop_B_tt')),
-            # ("C", t('arm_drop_C'), t('arm_drop_C_tt')),
-            # ("D", t('arm_drop_D'), t('arm_drop_D_tt')),
-        ), name="", default="A", description=t('arm_drop'))
+            ("Rigify", t('arm_drop_A'), t('arm_drop_A_tt')),
+            ("FK", t('arm_drop_B'), t('arm_drop_B_tt')),
+        ), name="", default="Rigify", description=t('arm_drop'))
 
     categorize_dropdown : EnumProperty(
         items=(

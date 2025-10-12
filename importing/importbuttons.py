@@ -89,7 +89,7 @@ class kkbp_import(bpy.types.Operator):
         if not c.is_svs():
             force_current_pose = c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json')['exportCurrentPose']
             if force_current_pose:
-                bpy.context.scene.kkbp.armature_dropdown = 'C'
+                bpy.context.scene.kkbp.armature_dropdown = 'FK'
 
         # #force no dark colors if Cycles classic is chosen as the shader (this mode does not use dark colors at all)
         # if bpy.context.scene.kkbp.shader_dropdown == 'D':

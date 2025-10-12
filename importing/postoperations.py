@@ -352,7 +352,7 @@ class post_operations(bpy.types.Operator):
         for bone in layer1_bones:
             set_armature_layer(bone, 1)
         
-        if not bpy.context.scene.kkbp.armature_dropdown == 'A':
+        if not bpy.context.scene.kkbp.armature_dropdown == 'Rigify':
             return
         c.kklog('Running Rigify conversion scripts...')
         c.switch(armature, 'object')
@@ -500,7 +500,7 @@ class post_operations(bpy.types.Operator):
 
         #delete nsfw bones if sfw mode enebled
         rig = c.get_rig()
-        if bpy.context.scene.kkbp.sfw_mode and bpy.context.scene.kkbp.armature_dropdown == 'A':
+        if bpy.context.scene.kkbp.sfw_mode and bpy.context.scene.kkbp.armature_dropdown == 'Rigify':
             if bpy.app.version[0] != 3:
                 rig.data.collections_all['29'].is_visible = True
             def delete_bone(group_list):
