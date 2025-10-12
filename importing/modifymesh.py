@@ -310,8 +310,6 @@ class modify_mesh(bpy.types.Operator):
 
     def remove_unused_shapekeys(self):
         '''remove shapekeys on all hair and clothes objects'''
-        # if bpy.context.scene.kkbp.shapekeys_dropdown not in ['A', 'B']:
-        #     return
         object_list = c.get_outfits()
         object_list.extend(c.get_alts())
         object_list.extend(c.get_hairs())
@@ -338,8 +336,6 @@ class modify_mesh(bpy.types.Operator):
 
     def translate_shapekeys(self):
         '''Renames the face shapekeys to english'''
-        # if not bpy.context.scene.kkbp.shapekeys_dropdown in ['A', 'B']:
-        #     return
         translation_dict = {
             #Prefixes
             "eye_face.f00":         "Eyes",
@@ -463,8 +459,6 @@ class modify_mesh(bpy.types.Operator):
 
     def combine_shapekeys(self):
         '''Creates new, full shapekeys using the existing partial shapekeys, and deletes the partial shapekeys if user didn't elect to keep them in the panel'''
-        # if not bpy.context.scene.kkbp.shapekeys_dropdown in ['A', 'B']:
-        #     return
 
         #make the basis shapekey active
         c.switch(c.get_body(), 'object')
@@ -581,8 +575,7 @@ class modify_mesh(bpy.types.Operator):
 
         #Delete all shapekeys that don't have a "KK" in their name
         #Don't delete the Basis shapekey though
-        #If not all of the KK shapekeys were generated, something went wrong so don't delete any shapekeys
-        # keep_partial_shapekeys = bpy.context.scene.kkbp.shapekeys_dropdown == 'B'
+        #If not all of the KK shapekeys were generated, something went wrong so don't delete any shapekeys (a headmod likely renamed the shapekeys)
         it_worked = len([key for key in shapekey_block if 'KK Eyes' in key.name]) > 25 and len([key for key in shapekey_block if 'KK Mouth' in key.name]) > 50
         if it_worked:
             for remove_shapekey in shapekey_block:
@@ -606,19 +599,18 @@ class modify_mesh(bpy.types.Operator):
             value = value[0]['blendShapeWeight'][0] / 100
             shapekey_block = bpy.data.shape_keys[c.get_body().data.shape_keys.name].key_blocks
             for shapekey in shapekey_block:
-                if shapekey.name.startswith('KK') and shapekey.name.find('Eyes') >= 0:
+                if shapekey.name.startswith('KK Eyes'):
                     shapekey.slider_max = 1 - value
 
-            c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_min = value
-            c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].value = value
-            c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = 1
+            if 'KK Eyes_default_cl' in shapekey_block:
+                c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_min = value
+                c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].value = value
+                c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = 1
 
             c.print_timer('correct shapekeys')
 
     def create_tear_shapekeys(self):
         '''Separate tears from body and create tear shapekeys'''
-        # if bpy.context.scene.kkbp.shapekeys_dropdown not in ['A', 'B']:
-        #     return
         # check if the tear material even exists
         try:
             tear_material_name = c.get_material_names('cf_O_namida_L')[0]

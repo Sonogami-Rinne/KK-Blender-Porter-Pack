@@ -94,13 +94,6 @@ class KKBPPreferences(bpy.types.AddonPreferences):
     # bake_norm_bool : BoolProperty(
     # description=t('bake_norm_tt'),
     # default = False)
-
-    # shapekeys_dropdown : EnumProperty(
-    #     items=(
-    #         ("A", t('shape_A'), t('shape_A_tt')),
-    #         ("B", t('shape_B'), t('shape_B_tt')),
-    #         ("C", t('shape_C'), t('shape_C_tt')),
-    #     ), name="", default="A", description="")
     
     shader_dropdown : EnumProperty(
         items=(
@@ -139,7 +132,6 @@ class KKBPPreferences(bpy.types.AddonPreferences):
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
-        # split.prop(self, "shapekeys_dropdown")
         split.prop(self, "shader_dropdown")
 
         row = col.row(align=True)

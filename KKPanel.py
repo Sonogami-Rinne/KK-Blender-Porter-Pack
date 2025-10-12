@@ -107,13 +107,6 @@ class PlaceholderProperties(PropertyGroup):
     animation_library_scale : BoolProperty(
     description=t('animation_library_scale_tt'),
     default = True)
-
-    # shapekeys_dropdown : EnumProperty(
-    #     items=(
-    #         ("A", t('shape_A'), t('shape_A_tt')),
-    #         ("B", t('shape_B'), t('shape_B_tt')),
-    #         ("C", t('shape_C'), t('shape_C_tt')),
-    #     ), name="", default=bpy.context.preferences.addons[__package__].preferences.shapekeys_dropdown, description="")
     
     shader_dropdown : EnumProperty(
         items=(
@@ -220,7 +213,6 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
-        # split.prop(context.scene.kkbp, "shapekeys_dropdown")
         split.prop(context.scene.kkbp, "shader_dropdown")
         row.enabled = scene.plugin_state not in ['imported', 'prepped']
 
