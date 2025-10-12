@@ -52,28 +52,59 @@ class modify_armature(bpy.types.Operator):
     bl_description = bl_idname
     bl_options = {'REGISTER', 'UNDO'}
     
+    center_bones = ['cf_n_height']
+    core_bones = [ 'cf_j_waist02', 'cf_j_siri_L', 'cf_j_siri_R', 'cf_j_shoulder_L', 'cf_j_shoulder_R',
+                'cf_j_neck', 'cf_j_head', 'Eyesx', 'cf_d_bust00', 'cf_j_bust01_L', 'cf_j_bust01_R',]
+
+    spine_bones = ['cf_j_hips', 'cf_j_waist01', 'cf_j_spine01', 'cf_j_spine02', 'cf_j_spine03',]
+    arm_bones_left =  ['cf_j_arm00_L', 'cf_j_forearm01_L', 'cf_j_hand_L',]
+    arm_bones_right = ['cf_j_arm00_R', 'cf_j_forearm01_R', 'cf_j_hand_R',]
+
+    finger_bones = ['cf_j_thumb01_L','cf_j_thumb02_L', 'cf_j_thumb03_L',
+                    'cf_j_ring01_L', 'cf_j_ring02_L', 'cf_j_ring03_L', 
+                    'cf_j_middle01_L','cf_j_middle02_L', 'cf_j_middle03_L', 
+                    'cf_j_little01_L','cf_j_little02_L', 'cf_j_little03_L', 
+                    'cf_j_index01_L','cf_j_index02_L', 'cf_j_index03_L',
+                    
+                    'cf_j_thumb01_R','cf_j_thumb02_R',  'cf_j_thumb03_R',
+                    'cf_j_ring01_R','cf_j_ring02_R', 'cf_j_ring03_R', 
+                    'cf_j_middle01_R','cf_j_middle02_R', 'cf_j_middle03_R', 
+                    'cf_j_little01_R','cf_j_little02_R', 'cf_j_little03_R', 
+                    'cf_j_index01_R', 'cf_j_index02_R', 'cf_j_index03_R',]
+
+    leg_bones_left =  ['cf_j_thigh00_L',  'cf_j_leg01_L', 'cf_j_foot_L', 'cf_j_toes_L', ]
+    leg_bones_right = ['cf_j_thigh00_R', 'cf_j_leg01_R', 'cf_j_foot_R',  'cf_j_toes_R',]
+
+    face_bones = ['cf_J_CheekUp_s_L', 'cf_J_CheekUp_s_R', 'cf_J_CheekLow_s_L', 'cf_J_CheekLow_s_R', 
+                  'cf_J_Chin_s', 'cf_J_ChinTip_Base', 'cf_J_ChinLow', 'cf_J_MouthCavity', 'cf_J_MouthMove', 
+                  'cf_J_Mouth_L', 'cf_J_Mouth_R', 'cf_J_MouthLow', 'cf_J_Mouthup', 'cf_J_EarBase_ry_L', 
+                  'cf_J_EarLow_L', 'cf_J_EarUp_L', 'cf_J_EarBase_ry_R', 'cf_J_EarLow_R', 'cf_J_EarUp_R', 
+                  'cf_J_Eye_rz_L', 'cf_J_CheekUp2_L', 'cf_J_Eye01_s_L', 'cf_J_Eye02_s_L', 'cf_J_Eye03_s_L', 
+                  'cf_J_Eye04_s_L', 'cf_J_Eye05_s_L', 'cf_J_Eye06_s_L', 'cf_J_Eye07_s_L', 'cf_J_Eye08_s_L', 
+                  'cf_J_Eye_rz_R', 'cf_J_CheekUp2_R', 'cf_J_Eye01_s_R', 'cf_J_Eye02_s_R', 'cf_J_Eye03_s_R', 
+                  'cf_J_Eye04_s_R', 'cf_J_Eye05_s_R', 'cf_J_Eye06_s_R', 'cf_J_Eye07_s_R', 'cf_J_Eye08_s_R', 
+                  'cf_J_Mayu_L', 'cf_J_MayuMid_s_L', 'cf_J_MayuTip_s_L', 'cf_J_Mayu_R', 'cf_J_MayuMid_s_R', 
+                  'cf_J_MayuTip_s_R', 'cf_J_NoseBase', 'cf_J_Nose_tip', 'cf_J_NoseBridge_rx']
+    
+    face_bones_mch = ['p_cf_head_bone', 'cf_J_N_FaceRoot', 'cf_J_FaceRoot', 'cf_J_FaceBase', 'cf_J_FaceLow_tz',
+                      'cf_J_FaceLow_sx', 'cf_J_CheekUpBase', 'cf_J_Chin_Base', 'cf_J_MouthBase_ty', 
+                      'cf_J_MouthBase_rx', 'cf_J_FaceUp_ty', 'cf_J_FaceUp_tz', 'cf_J_Eye_tz', 'cf_J_Eye_txdam_L', 
+                      'cf_J_Eye_tx_L', 'cf_J_Eye_txdam_R', 'cf_J_Eye_tx_R', 'cf_J_Mayu_ty', 'cf_J_Mayumoto_L', 
+                      'cf_J_Mayumoto_R', 'cf_J_NoseBase_rx', 'cf_J_Nose_rx', 'cf_J_NoseBridge_ty']
+
     def execute(self, context):
         try:
             is_svs = c.is_svs()
-            if compatible_mode := c.json_file_manager.get_json_file(f"{c.get_prefix()}_EditBoneInfo.json") is None:
-                c.kklog('Use compatible mode')
 
             self.reparent_all_objects()
 
             self.remove_bone_locks_and_modifiers()
             self.scale_armature_bones_down()
-            if not compatible_mode:
-                self.rebuild_bone_data()
-
+            self.rebuild_bone_data()
+            
             if not is_svs:
                 self.reparent_leg_and_body_bone()
                 self.delete_non_height_bones()
-
-            if compatible_mode:
-                self.modify_finger_bone_orientations()
-                self.set_bone_roll_data()
-
-            if not is_svs:
                 self.bend_bones_for_iks()
 
                 self.remove_empty_vertex_groups()
@@ -86,10 +117,7 @@ class modify_armature(bpy.types.Operator):
                 self.scale_skirt_and_face_bones()
 
                 self.prepare_ik_bones()
-                if compatible_mode:
-                    self.create_ik_bones()
-                else:
-                    self.create_f_ik_bones()
+                self.create_f_ik_bones()
 
                 self.create_joint_drivers()
 
@@ -113,7 +141,7 @@ class modify_armature(bpy.types.Operator):
         body = c.get_body()
         c.switch(armature, 'object')
         armature.parent = None
-        armature.name = 'Armature'
+        armature.name = 'Armature ' + c.get_name()
 
         #edit armature modifier on body
         body.modifiers[0].show_in_editmode = True
@@ -200,7 +228,7 @@ class modify_armature(bpy.types.Operator):
         c.print_timer('remove_bone_locks_and_modifiers')
 
     def reparent_leg_and_body_bone(self):
-        '''Reparent the leg bone to match the koikatsu armature. Unparent the body_bone bone to match koikatsu armature'''
+        '''Reparent the leg bone, and unparent the body_bone bone to match the koikatsu armature'''
         armature = c.get_armature()
         c.switch(armature, 'EDIT')
         #reparent foot to leg03
@@ -211,27 +239,22 @@ class modify_armature(bpy.types.Operator):
         c.print_timer('reparent_leg_and_body_bone')
 
     def delete_non_height_bones(self):
-        '''delete bones not under the cf_n_height bone. Deletes bones not under the BodyTop bone if PMX armature was selected'''
+        '''delete bones not under the cf_n_height bone'''
         armature = c.get_armature()
         c.switch(armature, 'EDIT')
-        def select_children(parent):
-            try:
-                parent.select = True
-                parent.select_head = True
-                parent.select_tail = True
-                for child in parent.children:
-                    select_children(child)
-            except:
-                #This is the last bone in the chain
-                return
-        select_children(armature.data.edit_bones['cf_n_height'])
+        keep_these = set()
+        def keep_these_children(parent):
+            keep_these.add(parent.name)
+            for child in parent.children:
+                keep_these_children(child)
+        keep_these_children(armature.data.edit_bones['cf_n_height'])
         #make sure these bones aren't deleted
-        for preserve_bone in ['cf_j_root', 'p_cf_body_bone', 'cf_n_height']:
-            armature.data.edit_bones[preserve_bone].select = True
-            armature.data.edit_bones[preserve_bone].select_head = True
-            armature.data.edit_bones[preserve_bone].select_tail = True
-        bpy.ops.armature.select_all(action='INVERT')
-        bpy.ops.armature.delete()
+        keep_these.add('cf_j_root')
+        keep_these.add('p_cf_body_bone')
+        keep_these.add('cf_n_height')
+        for bone in armature.data.edit_bones:
+            if bone.name not in keep_these:
+                armature.data.edit_bones.remove(bone)
         c.print_timer('delete_non_height_bones')
 
     def modify_finger_bone_orientations(self):
@@ -406,344 +429,6 @@ class modify_armature(bpy.types.Operator):
         bpy.ops.mysteryem.apply_pose_as_rest_pose_plus('INVOKE_DEFAULT')
         c.switch(c.get_armature(), 'OBJECT')
         c.print_timer('Rebuild bone data')
-
-    def set_bone_roll_data(self):
-        '''Use roll data from a reference armature dump to set the roll for each bone'''
-        reroll_data = {
-            'BodyTop': 0.0,
-            'p_cf_body_bone': 0.0,
-            'cf_j_root': 0.0,
-            'cf_n_height': 0.0,
-            'cf_j_hips': 0.0,
-            'cf_j_spine01': 0.0,
-            'cf_j_spine02': 0.0,
-            'cf_j_spine03': 0.0,
-            'cf_d_backsk_00': 0.0,
-            'cf_j_backsk_C_01': -1.810556946517264e-23,
-            'cf_j_backsk_C_02': -1.1667208633608472e-15,
-            'cf_j_backsk_L_01': -0.001851903973147273,
-            'cf_j_backsk_L_02': -0.0034122250508517027,
-            'cf_j_backsk_R_01': 0.0018519698642194271,
-            'cf_j_backsk_R_02': 0.003412271151319146,
-            'cf_d_bust00': 0.0,
-            'cf_s_bust00_L': 0.0,
-            'cf_d_bust01_L': 0.4159948229789734,
-            'cf_j_bust01_L': 0.4159948229789734,
-            'cf_d_bust02_L': 0.4159948229789734,
-            'cf_j_bust02_L': 0.4151105582714081,
-            'cf_d_bust03_L': 0.4151104986667633,
-            'cf_j_bust03_L': 0.4151104986667633,
-            'cf_d_bnip01_L': 0.4151104986667633,
-            'cf_j_bnip02root_L': 0.4151104986667633,
-            'cf_s_bnip02_L': 0.4151104986667633,
-            'cf_j_bnip02_L': 0.4154767096042633,
-            'cf_s_bnip025_L': 0.4154742360115051,
-            'cf_s_bnip01_L': 0.41547420620918274,
-            'cf_s_bnip015_L': 0.41547420620918274,
-            'cf_s_bust03_L': 0.4153861403465271,
-            'cf_s_bust02_L': 0.38631150126457214,
-            'cf_s_bust01_L': 0.4159947633743286,
-            'cf_s_bust00_R': 0.0,
-            'cf_d_bust01_R': -0.4159948527812958,
-            'cf_j_bust01_R': -0.4159948229789734,
-            'cf_d_bust02_R': -0.41599488258361816,
-            'cf_j_bust02_R': -0.41511064767837524,
-            'cf_d_bust03_R': -0.41511061787605286,
-            'cf_j_bust03_R': -0.41511064767837524,
-            'cf_d_bnip01_R': -0.41511061787605286,
-            'cf_j_bnip02root_R': -0.41511061787605286,
-            'cf_s_bnip02_R': -0.41511061787605286,
-            'cf_j_bnip02_R': -0.41547682881355286,
-            'cf_s_bnip025_R': -0.4154742360115051,
-            'cf_s_bnip01_R': -0.4154742956161499,
-            'cf_s_bnip015_R': -0.4154742956161499,
-            'cf_s_bust03_R': -0.41538622975349426,
-            'cf_s_bust02_R': -0.38631150126457214,
-            'cf_s_bust01_R': -0.4159948229789734,
-            'cf_d_shoulder_L': 0.0,
-            'cf_j_shoulder_L': 0.0,
-            'cf_d_shoulder02_L': 4.2021918488899246e-05,
-            'cf_s_shoulder02_L': 4.202192212687805e-05,
-            'cf_j_arm00_L': 0.0,
-            'cf_d_arm01_L': -0.0012054670369252563,
-            'cf_s_arm01_L': 0.009222406893968582,
-            'cf_d_arm02_L': -0.0012054670369252563,
-            'cf_s_arm02_L': 0.004008470103144646,
-            'cf_d_arm03_L': -0.0012054670369252563,
-            'cf_s_arm03_L': -0.0012097591534256935,
-            'cf_j_forearm01_L': 0.0,
-            'cf_d_forearm02_L': 0.0,
-            'cf_s_forearm02_L': 0.0,
-            'cf_d_wrist_L': 0.0,
-            'cf_s_wrist_L': 0.0,
-            'cf_d_hand_L': 0.0,
-            'cf_j_hand_L': -6.776263578034403e-21,
-            'cf_s_hand_L': -6.776263578034403e-21,
-            'cf_j_index01_L': math.radians(-11),
-            'cf_j_index02_L': math.radians(-5),
-            'cf_j_index03_L': math.radians(0),
-            'cf_j_little01_L': math.radians(30),
-            'cf_j_little02_L': math.radians(11),
-            'cf_j_little03_L': math.radians(30),
-            'cf_j_middle01_L': math.radians(3),
-            'cf_j_middle02_L': math.radians(3),
-            'cf_j_middle03_L': math.radians(3),
-            'cf_j_ring01_L': math.radians(15),
-            'cf_j_ring02_L': math.radians(7),
-            'cf_j_ring03_L': math.radians(15),
-            'cf_j_thumb01_L': math.pi,
-            'cf_j_thumb02_L': math.pi,
-            'cf_j_thumb03_L': math.pi,
-            'cf_s_elbo_L': 0.0,
-            'cf_s_forearm01_L': 0.0,
-            'cf_s_elboback_L': 0.0,
-            'cf_d_shoulder_R': 0.0,
-            'cf_j_shoulder_R': 0.0,
-            'cf_d_shoulder02_R': -4.355472628958523e-05,
-            'cf_s_shoulder02_R': -4.355472628958523e-05,
-            'cf_j_arm00_R': 0.0,
-            'cf_d_arm01_R': 0.0009736516512930393,
-            'cf_s_arm01_R': 0.0009736517095007002,
-            'cf_d_arm02_R': 0.0009736516512930393,
-            'cf_s_arm02_R': -0.004238337744027376,
-            'cf_d_arm03_R': 0.0009736516512930393,
-            'cf_s_arm03_R': 0.0009736517095007002,
-            'cf_j_forearm01_R': 0.0,
-            'cf_d_forearm02_R': 2.6637668270268477e-05,
-            'cf_s_forearm02_R': 2.6637668270268477e-05,
-            'cf_d_wrist_R': 1.9139706637361087e-05,
-            'cf_s_wrist_R': 1.9139704818371683e-05,
-            'cf_d_hand_R': 1.9139704818371683e-05,
-            'o_brac': 0.0,
-            'cf_j_hand_R': -6.776470373187541e-21,
-            'cf_s_hand_R': -6.776470373187541e-21,
-            'cf_j_index01_R': math.radians(-11),
-            'cf_j_index02_R': math.radians(-5),
-            'cf_j_index03_R': math.radians(0),
-            'cf_j_little01_R': math.radians(30),
-            'cf_j_little02_R': math.radians(11),
-            'cf_j_little03_R': math.radians(30),
-            'cf_j_middle01_R': math.radians(3),
-            'cf_j_middle02_R': math.radians(3),
-            'cf_j_middle03_R': math.radians(3),
-            'cf_j_ring01_R': math.radians(15),
-            'cf_j_ring02_R': math.radians(7),
-            'cf_j_ring03_R': math.radians(15),
-            'cf_j_thumb01_R': math.radians(0),
-            'cf_j_thumb02_R': math.radians(0),
-            'cf_j_thumb03_R': math.radians(0),
-            'cf_s_elbo_R': 0.0,
-            'cf_s_forearm01_R': 0.0,
-            'cf_s_elboback_R': 4.203895392974451e-44,
-            'cf_d_spinesk_00': 0.0,
-            'cf_j_spinesk_00': 5.2774636787104646e-23,
-            'cf_j_spinesk_01': -0.01019450556486845,
-            'cf_j_spinesk_02': 0.0032659571152180433,
-            'cf_j_spinesk_03': -0.001969193108379841,
-            'cf_j_spinesk_04': -0.001969192875549197,
-            'cf_j_spinesk_05': -0.00196919240988791,
-            'cf_j_neck': 0.0,
-            'cf_j_head': 0.0,
-            'cf_s_head': 0.0,
-            'p_cf_head_bone': 0.0,
-            'cf_J_N_FaceRoot': 2.1210576051089447e-07,
-            'cf_J_FaceRoot': 2.1210573208918504e-07,
-            'cf_J_FaceBase': 2.1210573208918504e-07,
-            'cf_J_FaceLow_tz': 2.1210573208918504e-07,
-            'cf_J_FaceLow_sx': 2.1210573208918504e-07,
-            'cf_J_CheekUpBase': 2.1210573208918504e-07,
-            'cf_J_CheekUp_s_L': 2.1210573208918504e-07,
-            'cf_J_CheekUp_s_R': 2.1210573208918504e-07,
-            'cf_J_Chin_Base': 2.1210574630003975e-07,
-            'cf_J_CheekLow_s_L': 2.1210573208918504e-07,
-            'cf_J_CheekLow_s_R': 2.1210573208918504e-07,
-            'cf_J_Chin_s': 2.1210573208918504e-07,
-            'cf_J_ChinTip_Base': 2.1210574630003975e-07,
-            'cf_J_ChinLow': 2.1210573208918504e-07,
-            'cf_J_MouthBase_ty': 2.1210573208918504e-07,
-            'cf_J_MouthBase_rx': 2.1210573208918504e-07,
-            'cf_J_MouthCavity': 2.1210571787833032e-07,
-            'cf_J_MouthMove': 2.1210571787833032e-07,
-            'cf_J_Mouth_L': 2.1210573208918504e-07,
-            'cf_J_Mouth_R': 2.1210573208918504e-07,
-            'cf_J_MouthLow': 2.1210573208918504e-07,
-            'cf_J_Mouthup': 2.1210573208918504e-07,
-            'cf_J_FaceUp_ty': 2.1210573208918504e-07,
-            'a_n_headside': 2.1210574630003975e-07,
-            'cf_J_EarBase_ry_L': -0.1504509449005127,
-            'cf_J_EarLow_L': -0.1504509449005127,
-            'cf_J_EarUp_L': -0.1504509449005127,
-            'cf_J_EarBase_ry_R': 0.15762563049793243,
-            'cf_J_EarLow_R': 0.15762564539909363,
-            'cf_J_EarUp_R': 0.15762564539909363,
-            'cf_J_FaceUp_tz': 2.1210574630003975e-07,
-            'cf_J_Eye_tz': 2.1210574630003975e-07,
-            'cf_J_Eye_txdam_L': 2.1210574630003975e-07,
-            'cf_J_Eye_tx_L': 2.1210573208918504e-07,
-            'cf_J_Eye_rz_L': 0.20466913282871246,
-            'cf_J_CheekUp2_L': 0.004773593973368406,
-            'cf_J_Eye01_s_L': 0.20466917753219604,
-            'cf_J_Eye02_s_L': 0.20466917753219604,
-            'cf_J_Eye03_s_L': 0.20466917753219604,
-            'cf_J_Eye04_s_L': 0.20466917753219604,
-            'cf_J_Eye05_s_L': 0.20466917753219604,
-            'cf_J_Eye06_s_L': 0.20466917753219604,
-            'cf_J_Eye07_s_L': 0.20466917753219604,
-            'cf_J_Eye08_s_L': 0.20466917753219604,
-            'cf_J_hitomi_tx_L': 0.18981075286865234,
-            'cf_J_Eye_txdam_R': 2.1210574630003975e-07,
-            'cf_J_Eye_tx_R': 2.1210576051089447e-07,
-            'cf_J_Eye_rz_R': -0.2046687752008438,
-            'cf_J_CheekUp2_R': -0.0047732163220644,
-            'cf_J_Eye01_s_R': -0.2046687752008438,
-            'cf_J_Eye02_s_R': -0.2046687752008438,
-            'cf_J_Eye03_s_R': -0.2046687752008438,
-            'cf_J_Eye04_s_R': -0.2046687752008438,
-            'cf_J_Eye05_s_R': -0.2046687752008438,
-            'cf_J_Eye06_s_R': -0.2046687752008438,
-            'cf_J_Eye07_s_R': -0.2046687752008438,
-            'cf_J_Eye08_s_R': -0.2046687752008438,
-            'cf_J_hitomi_tx_R': -0.2046687752008438,
-            'cf_J_Mayu_ty': 2.1210574630003975e-07,
-            'cf_J_Mayumoto_L': 0.3458269536495209,
-            'cf_J_Mayu_L': 0.34616410732269287,
-            'cf_J_MayuMid_s_L': 0.34626930952072144,
-            'cf_J_MayuTip_s_L': 0.3462893068790436,
-            'cf_J_Mayumoto_R': -0.34582653641700745,
-            'cf_J_Mayu_R': -0.34616369009017944,
-            'cf_J_MayuMid_s_R': -0.3462689220905304,
-            'cf_J_MayuTip_s_R': -0.34628885984420776,
-            'cf_J_NoseBase': 2.1210573208918504e-07,
-            'cf_J_NoseBase_rx': 2.1210573208918504e-07,
-            'cf_J_Nose_rx': 2.1210573208918504e-07,
-            'cf_J_Nose_tip': 2.1210571787833032e-07,
-            'cf_J_NoseBridge_ty': 2.1210573208918504e-07,
-            'cf_J_NoseBridge_rx': 2.1210573208918504e-07,
-            'cf_s_neck': 0.0,
-            'cf_s_spine03': 0.0,
-            'a_n_back': -3.1415927410125732,
-            'cf_s_spine02': 0.0,
-            'cf_s_spine01': 0.0,
-            'cf_j_waist01': 0.0,
-            'cf_d_sk_top': 0.0,
-            'cf_d_sk_00_00': -3.1415927410125732,
-            'cf_j_sk_00_00': -3.1415927410125732,
-            'cf_j_sk_00_01': -3.1415927410125732,
-            'cf_j_sk_00_02': 3.1415293216705322,
-            'cf_j_sk_00_03': 3.1415293216705322,
-            'cf_j_sk_00_04': 3.1415293216705322,
-            'cf_j_sk_00_05': 3.1415293216705322,
-            'cf_d_sk_01_00': 2.3621666431427,
-            'cf_j_sk_01_00': 2.3621666431427,
-            'cf_j_sk_01_01': 2.364142656326294,
-            'cf_j_sk_01_02': 2.3684122562408447,
-            'cf_j_sk_01_03': 2.3684122562408447,
-            'cf_j_sk_01_04': 2.3684122562408447,
-            'cf_j_sk_01_05': 2.3684122562408447,
-            'cf_d_sk_02_00': 1.5806118249893188,
-            'cf_j_sk_02_00': 1.5808137655258179,
-            'cf_j_sk_02_01': 1.5806832313537598,
-            'cf_j_sk_02_02': 1.5820348262786865,
-            'cf_j_sk_02_03': 1.5820348262786865,
-            'cf_j_sk_02_04': 1.5820348262786865,
-            'cf_j_sk_02_05': 1.5820348262786865,
-            'cf_d_sk_03_00': 0.7112568616867065,
-            'cf_j_sk_03_00': 0.7112571597099304,
-            'cf_j_sk_03_01': 0.7112568020820618,
-            'cf_j_sk_03_02': 0.709623396396637,
-            'cf_j_sk_03_03': 0.7096233367919922,
-            'cf_j_sk_03_04': 0.7096233367919922,
-            'cf_j_sk_03_05': 0.7096234560012817,
-            'cf_d_sk_04_00': 3.4498308600352867e-17,
-            'cf_j_sk_04_00': 0.00037256989162415266,
-            'cf_j_sk_04_01': 0.00012998198508284986,
-            'cf_j_sk_04_02': 0.0001299990399274975,
-            'cf_j_sk_04_03': 0.0001299990399274975,
-            'cf_j_sk_04_04': 0.0001299990399274975,
-            'cf_j_sk_04_05': 0.0001299990399274975,
-            'cf_d_sk_05_00': -0.7112577557563782,
-            'cf_j_sk_05_00': -0.7112579345703125,
-            'cf_j_sk_05_01': -0.7112577557563782,
-            'cf_j_sk_05_02': -0.7096185088157654,
-            'cf_j_sk_05_03': -0.7096185088157654,
-            'cf_j_sk_05_04': -0.7096185088157654,
-            'cf_j_sk_05_05': -0.7096185088157654,
-            'cf_d_sk_06_00': -1.5806118249893188,
-            'cf_j_sk_06_00': -1.5808138847351074,
-            'cf_j_sk_06_01': -1.5806833505630493,
-            'cf_j_sk_06_02': -1.5820401906967163,
-            'cf_j_sk_06_03': -1.5820401906967163,
-            'cf_j_sk_06_04': -1.5820401906967163,
-            'cf_j_sk_06_05': -1.5820401906967163,
-            'cf_d_sk_07_00': -2.3621666431427,
-            'cf_j_sk_07_00': -2.3621666431427,
-            'cf_j_sk_07_01': -2.3649401664733887,
-            'cf_j_sk_07_02': -2.3683762550354004,
-            'cf_j_sk_07_03': -2.3683762550354004,
-            'cf_j_sk_07_04': -2.3683762550354004,
-            'cf_j_sk_07_05': -2.3683762550354004,
-            'cf_j_waist02': 0.0,
-            'cf_d_siri_L': 4.435180380824022e-05,
-            'cf_d_siri01_L': 4.484502278501168e-05,
-            'cf_j_siri_L': 4.435180744621903e-05,
-            'cf_s_siri_L': 4.607543087331578e-05,
-            'cf_d_ana': 4.053832753925235e-07,
-            'cf_j_ana': 4.053832753925235e-07,
-            'cf_s_ana': 4.0538333223594236e-07,
-            'cf_d_kokan': 0.0,
-            'cf_j_kokan': 7.531064056820469e-07,
-            'cf_d_siri_R': -5.766015220842746e-08,
-            'cf_d_siri01_R': -5.766015220842746e-08,
-            'cf_j_siri_R': -5.766015220842746e-08,
-            'cf_s_siri_R': -5.766015576114114e-08,
-            'cf_j_thigh00_L': 0.0,
-            'cf_d_thigh01_L': 0.0,
-            'cf_s_thigh01_L': 0.0,
-            'cf_d_thigh02_L': 0.0,
-            'cf_s_thigh02_L': 0.0,
-            'cf_d_thigh03_L': 0.0,
-            'cf_s_thigh03_L': 0.0,
-            'cf_j_leg01_L': 0.0,
-            'cf_d_kneeF_L': 0.0,
-            'cf_d_leg02_L': -8.435114585980674e-12,
-            'cf_s_leg02_L': 0.0019489085534587502,
-            'cf_d_leg03_L': 2.6021072699222714e-05,
-            'cf_s_leg03_L': 2.6021054509328678e-05,
-            'cf_j_leg03_L': -1.7005811689396744e-11,
-            'cf_j_foot_L': -1.6870217028897017e-11,
-            'cf_j_toes_L': -1.6870217028897017e-11,
-            'cf_s_leg01_L': 1.5783663344534925e-25,
-            'cf_s_kneeB_L': 1.5783659646749431e-25,
-            'cf_j_thigh00_R': 0.0,
-            'cf_d_thigh01_R': -2.9915531455925155e-27,
-            'cf_s_thigh01_R': -2.3654518046693106e-22,
-            'cf_d_thigh02_R': 0.0,
-            'cf_s_thigh02_R': 0.0,
-            'cf_d_thigh03_R': 0.0,
-            'cf_s_thigh03_R': 0.0,
-            'cf_j_leg01_R': 0.0,
-            'cf_d_kneeF_R': 0.0,
-            'cf_d_leg02_R': -3.092561655648751e-07,
-            'cf_s_leg02_R': -3.092561655648751e-07,
-            'cf_d_leg03_R': -4.125216790384911e-08,
-            'cf_s_leg03_R': -4.125216790384911e-08,
-            'cf_j_leg03_R': -6.69778160045098e-07,
-            'cf_j_foot_R': -6.185123311297502e-07,
-            'cf_j_toes_R': -6.185122742863314e-07,
-            'cf_s_leg01_R': -8.901179133911008e-16,
-            'cf_s_kneeB_R': -8.901180192702192e-16,
-            'cf_s_waist02': 0.0,
-            'cf_s_leg_L': -0.004678195342421532,
-            'cf_s_leg_R': 0.004779986571520567,
-            'cf_s_waist01': 0.0,
-        }
-
-        armature = c.get_armature()
-        c.switch(armature, 'edit')
-        for bone in reroll_data:
-            if armature.data.edit_bones.get(bone):
-                armature.data.edit_bones[bone].roll = reroll_data[bone]
-        c.print_timer('set_bone_roll_data')
     
     def bend_bones_for_iks(self):
         '''slightly modify the armature to support IKs'''
@@ -796,10 +481,7 @@ class modify_armature(bpy.types.Operator):
     def reorganize_armature_layers(self):
         '''Moves all bones to different armature layers'''
         armature = c.get_armature()
-        if bpy.app.version[0] == 3:
-            c.switch(armature, 'pose')
-        else:
-            c.switch(armature, 'object')
+        c.switch(armature, 'object')
         
         core_list   = self.get_bone_list('core_list')
         non_ik      = self.get_bone_list('non_ik')
@@ -2238,11 +1920,11 @@ class modify_armature(bpy.types.Operator):
         keylist = list(has_vertexes)
         #then fill in the real value using the indexes
         for v in obj.data.vertices:
-            for g in v.groups:
-                gn = g.group
-                w = obj.vertex_groups[g.group].weight(v.index)
-                if (has_vertexes.get(keylist[gn]) is None or w>has_vertexes[keylist[gn]]):
-                    has_vertexes[keylist[gn]] = True
+            for group in v.groups:
+                gname = group.group
+                wweight = obj.vertex_groups[group.group].weight(v.index)
+                if (has_vertexes.get(keylist[gname]) is None or wweight > has_vertexes[keylist[gname]]):
+                    has_vertexes[keylist[gname]] = True
         return has_vertexes
 
     def set_armature_layer(self, bone_name, show_layer, hidden = False):
