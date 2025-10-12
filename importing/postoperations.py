@@ -115,8 +115,8 @@ class post_operations(bpy.types.Operator):
         if not bpy.context.scene.kkbp.shader_dropdown in ['B', 'D']:
             return
         c.kklog('Applying Cycles adjustments...')
-        c.import_from_library_file('NodeTree', ['.Cycles', '.Cycles no shadows', '.Cycles Classic'], bpy.context.scene.kkbp.use_material_fake_user)
-        c.import_from_library_file('Image', ['Template: Black'], bpy.context.scene.kkbp.use_material_fake_user)
+        c.import_from_library_file('NodeTree', ['.Cycles', '.Cycles no shadows', '.Cycles Classic'], True)
+        c.import_from_library_file('Image', ['Template: Black'], True)
 
         #remove outline modifier
         for o in bpy.context.view_layer.objects:
@@ -235,7 +235,7 @@ class post_operations(bpy.types.Operator):
     def apply_eeveemod(self):
         if not bpy.context.scene.kkbp.shader_dropdown == 'C':
             return
-        c.import_from_library_file('NodeTree', ['.Eevee Mod', '.Eevee Mod (face)'], bpy.context.scene.kkbp.use_material_fake_user)
+        c.import_from_library_file('NodeTree', ['.Eevee Mod', '.Eevee Mod (face)'], True)
 
         c.kklog('Applying Eevee Shader adjustments...')
         #Import eevee mod node group and replace the combine colors group with the eevee mod group
@@ -352,7 +352,7 @@ class post_operations(bpy.types.Operator):
         for bone in layer1_bones:
             set_armature_layer(bone, 1)
         
-        if not bpy.context.scene.kkbp.armature_dropdown == 'B':
+        if not bpy.context.scene.kkbp.armature_dropdown == 'Rigify':
             return
         c.kklog('Running Rigify conversion scripts...')
         c.switch(armature, 'object')
@@ -500,7 +500,7 @@ class post_operations(bpy.types.Operator):
 
         #delete nsfw bones if sfw mode enebled
         rig = c.get_rig()
-        if bpy.context.scene.kkbp.sfw_mode and bpy.context.scene.kkbp.armature_dropdown == 'B':
+        if bpy.context.scene.kkbp.sfw_mode and bpy.context.scene.kkbp.armature_dropdown == 'Rigify':
             if bpy.app.version[0] != 3:
                 rig.data.collections_all['29'].is_visible = True
             def delete_bone(group_list):

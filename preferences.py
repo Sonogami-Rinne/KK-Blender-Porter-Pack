@@ -24,9 +24,9 @@ class KKBPPreferences(bpy.types.AddonPreferences):
     description= t('outline_tt'),
     default = False)
     
-    use_material_fake_user : BoolProperty(
-    description=t('keep_templates_tt'),
-    default = True)
+    # use_material_fake_user : BoolProperty(
+    # description=t('keep_templates_tt'),
+    # default = True)
 
     old_bake_bool : BoolProperty(
     description=t('old_bake_tt'),
@@ -34,11 +34,9 @@ class KKBPPreferences(bpy.types.AddonPreferences):
 
     armature_dropdown : EnumProperty(
         items=(
-            ("A", t('arm_drop_A'), t('arm_drop_A_tt')),
-            ("B", t('arm_drop_B'), t('arm_drop_B_tt')),
-            ("C", t('arm_drop_C'), t('arm_drop_C_tt')),
-            ("D", t('arm_drop_D'), t('arm_drop_D_tt')),
-        ), name="", default="A", description=t('arm_drop'))
+            ("Rigify", t('arm_drop_A'), t('arm_drop_A_tt')),
+            ("FK", t('arm_drop_B'), t('arm_drop_B_tt')),
+        ), name="", default="Rigify", description=t('arm_drop'))
 
     categorize_dropdown : EnumProperty(
         items=(
@@ -46,29 +44,29 @@ class KKBPPreferences(bpy.types.AddonPreferences):
             ("B", t('cat_drop_B'), t('cat_drop_B_tt')),
         ), name="", default="A", description=t('cat_drop'))
 
-    colors_dropdown : BoolProperty(
-    description=t('dark_F_tt'),
-    default = True)
+    # colors_dropdown : BoolProperty(
+    # description=t('dark_F_tt'),
+    # default = True)
 
-    bake_light_bool : BoolProperty(
-    description=t('bake_light_tt'),
-    default = True)
+    # bake_light_bool : BoolProperty(
+    # description=t('bake_light_tt'),
+    # default = True)
 
-    bake_dark_bool : BoolProperty(
-    description=t('bake_dark_tt'),
-    default = True)
+    # bake_dark_bool : BoolProperty(
+    # description=t('bake_dark_tt'),
+    # default = True)
 
-    bake_norm_bool : BoolProperty(
-    description=t('bake_norm_tt'),
-    default = False)
+    # bake_norm_bool : BoolProperty(
+    # description=t('bake_norm_tt'),
+    # default = False)
 
     use_atlas : BoolProperty(
     description=t('use_atlas'),
     default = False)
 
-    delete_cache : BoolProperty(
-    description=t('delete_cache'),
-    default = False)
+    # delete_cache : BoolProperty(
+    # description=t('delete_cache'),
+    # default = False)
 
     prep_dropdown : EnumProperty(
         items=(
@@ -85,24 +83,17 @@ class KKBPPreferences(bpy.types.AddonPreferences):
             ("C", t('simp_drop_C'), t('simp_drop_C_tt')),
         ), name="", default="A", description=t('simp_drop'))
     
-    bake_light_bool : BoolProperty(
-    description=t('bake_light_tt'),
-    default = True)
+    # bake_light_bool : BoolProperty(
+    # description=t('bake_light_tt'),
+    # default = True)
 
-    bake_dark_bool : BoolProperty(
-    description=t('bake_dark_tt'),
-    default = True)
+    # bake_dark_bool : BoolProperty(
+    # description=t('bake_dark_tt'),
+    # default = True)
 
-    bake_norm_bool : BoolProperty(
-    description=t('bake_norm_tt'),
-    default = False)
-
-    shapekeys_dropdown : EnumProperty(
-        items=(
-            ("A", t('shape_A'), t('shape_A_tt')),
-            ("B", t('shape_B'), t('shape_B_tt')),
-            ("C", t('shape_C'), t('shape_C_tt')),
-        ), name="", default="A", description="")
+    # bake_norm_bool : BoolProperty(
+    # description=t('bake_norm_tt'),
+    # default = False)
     
     shader_dropdown : EnumProperty(
         items=(
@@ -141,18 +132,17 @@ class KKBPPreferences(bpy.types.AddonPreferences):
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
-        split.prop(self, "shapekeys_dropdown")
         split.prop(self, "shader_dropdown")
 
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
-        split.prop(self, "colors_dropdown", toggle=True, text = t('dark_F'))
-        split.prop(self, "delete_cache", toggle=True, text = t('delete_cache'))
+        # split.prop(self, "colors_dropdown", toggle=True, text = t('dark_F'))
+        # split.prop(self, "delete_cache", toggle=True, text = t('delete_cache'))
 
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(self, "fix_seams", toggle=True, text = t('seams'))
-        split.prop(self, "use_material_fake_user", toggle=True, text = t('keep_templates'))
+        # split.prop(self, "use_material_fake_user", toggle=True, text = t('keep_templates'))
 
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)

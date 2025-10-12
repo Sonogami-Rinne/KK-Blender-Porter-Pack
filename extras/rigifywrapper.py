@@ -14,7 +14,7 @@ class rigify_convert(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            bpy.context.scene.kkbp.armature_dropdown = 'B'
+            bpy.context.scene.kkbp.armature_dropdown = 'Rigify'
             post_operations.retreive_stored_tags()
             post_operations.apply_rigify()
             return {'FINISHED'}

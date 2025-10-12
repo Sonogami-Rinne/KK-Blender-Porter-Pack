@@ -31,7 +31,7 @@ class modify_mesh(bpy.types.Operator):
     def execute(self, context):
         try:
             is_svs = c.is_svs()
-            light_dark_mode = is_svs or c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture')
+            # light_dark_mode = is_svs or c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture')
             self.rename_uv_maps()
 
             self.clean_up_duplicates()
@@ -39,6 +39,9 @@ class modify_mesh(bpy.types.Operator):
             self.separate_hair()
             self.separate_alternate_clothing()
             self.delete_shad_bone()
+
+            # if light_dark_mode and not is_svs:
+            #     self.delete_eyeline_down()
 
             if not is_svs:
                 self.separate_hitboxes()
@@ -48,7 +51,6 @@ class modify_mesh(bpy.types.Operator):
                 self.translate_shapekeys()
                 self.combine_shapekeys()
                 self.correct_shapekeys()
-            if not light_dark_mode:
                 self.create_tear_shapekeys()
                 self.create_gag_eye_shapekeys()
 
@@ -249,6 +251,10 @@ class modify_mesh(bpy.types.Operator):
             # bpy.data.objects.remove(bonely)
         c.print_timer('delete_shad_bone')
 
+    def delete_eyeline_down(self):
+        if eyeline := self.separate_materials(c.get_body(), ["cf_m_eyeline_down"], 'eyeline down'):
+            bpy.data.objects.remove(eyeline)
+        c.print_timer('delete_eyeline_down')
 
     def separate_hitboxes(self):
         '''Separate the hitbox mesh, if present'''
@@ -304,8 +310,6 @@ class modify_mesh(bpy.types.Operator):
 
     def remove_unused_shapekeys(self):
         '''remove shapekeys on all hair and clothes objects'''
-        if bpy.context.scene.kkbp.shapekeys_dropdown not in ['A', 'B']:
-            return
         object_list = c.get_outfits()
         object_list.extend(c.get_alts())
         object_list.extend(c.get_hairs())
@@ -332,16 +336,14 @@ class modify_mesh(bpy.types.Operator):
 
     def translate_shapekeys(self):
         '''Renames the face shapekeys to english'''
-        if not bpy.context.scene.kkbp.shapekeys_dropdown in ['A', 'B']:
-            return
         translation_dict = {
             #Prefixes
             "eye_face.f00":         "Eyes",
             "kuti_face.f00":        "Lips",
             "eye_siroL.sL00":       "EyeWhitesL",
             "eye_siroR.sR00":       "EyeWhitesR",
-            "eye_line_u.elu00":     "Eyelashes1",
-            "eye_line_l.ell00":     "Eyelashes2",
+            "eye_line_u.elu00":     "EyelashesUp",
+            "eye_line_l.ell00":     "EyelashesDown",
             # "eye_naM.naM00":        "EyelashesPos",
             "eye_nose.nl00":        "NoseTop",
             "kuti_nose.nl00":       "NoseBot",
@@ -426,9 +428,6 @@ class modify_mesh(bpy.types.Operator):
         #Emotions extra
             "_s_":                  "_small_",
             "_l_":                  "_big_",
-
-            #Emotions Yelan headmod exception
-            'T_Default':            '_default_op',
         }
 
         c.get_body().active_shape_key_index = 0
@@ -460,23 +459,25 @@ class modify_mesh(bpy.types.Operator):
 
     def combine_shapekeys(self):
         '''Creates new, full shapekeys using the existing partial shapekeys, and deletes the partial shapekeys if user didn't elect to keep them in the panel'''
-        if not bpy.context.scene.kkbp.shapekeys_dropdown in ['A', 'B']:
-            return
 
         #make the basis shapekey active
         c.switch(c.get_body(), 'object')
         c.get_body().active_shape_key_index = 0
 
         def whatCat(keyName):
-            #Eyelashes1 is used because I couldn't see a difference between the other one and they overlap if both are used
             #EyelashPos is unused because Eyelashes work better and it overlaps with Eyelashes
             eyes = [keyName.find("Eyes"),
             keyName.find("NoseT"),
-            keyName.find("Eyelashes1"),
-            # keyName.find("EyeWhites"),
+            keyName.find("EyelashesUp"),
+            keyName.find("EyelashesDown"),
             keyName.find('Tear_big'),
             keyName.find('Tear_med'),
             keyName.find('Tear_small')]
+            # The eyewhites will clip through the eyes if this key is activated. This can be fixed by adjusting the material order in Blender.
+            # I don't know if this will work in other programs though, so I'm only going to activate it if the user has chosen the Rigify armature.
+            # This give me some kind of hint that the user will only be using the model in blender, so it's okay that they clip because it can be fixed
+            if bpy.context.scene.kkbp.armature_dropdown == 'Rigify':
+                eyes.append(keyName.find("EyeWhites"))
             if not all(v == -1 for v in eyes):
                 return 'Eyes'
             mouth = [keyName.find("NoseB"),
@@ -494,7 +495,7 @@ class modify_mesh(bpy.types.Operator):
         inUse = []
         #These mouth shapekeys require the default teeth and tongue shapekeys to be active
         correctionList = ['_u_small_op', '_u_big_op', '_e_big_op', '_o_small_op', '_o_big_op', '_neko_op', '_triangle_op']
-        shapekey_block = bpy.data.shape_keys[c.get_body().data.shape_keys.name].key_blocks
+        shapekey_block = c.get_body().data.shape_keys.key_blocks
 
         ACTIVE = 0.9
         def activate_shapekey(key_act):
@@ -565,12 +566,18 @@ class modify_mesh(bpy.types.Operator):
                 #lazy crash prevention
                 if counter % 20 == 0:
                     bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        
+        #Move all of the KK Eyebrow shapekeys to the bottom of the list
+        eyebrow_keys = [key for key in shapekey_block if 'KK Eyebrows' in key.name]
+        for key in eyebrow_keys:
+            c.get_body().active_shape_key_index = c.get_body().data.shape_keys.key_blocks.keys().index(key.name)
+            bpy.ops.object.shape_key_move(type='BOTTOM') #Non-ops way to do this?
+
         #Delete all shapekeys that don't have a "KK" in their name
         #Don't delete the Basis shapekey though
-        #If no KK shapekeys were generated, something went wrong so don't delete any shapekeys
-        keep_partial_shapekeys = bpy.context.scene.kkbp.shapekeys_dropdown == 'B'
-        it_worked = True if [key for key in shapekey_block if 'KK ' in key.name] else False
-        if it_worked and not keep_partial_shapekeys:
+        #If not all of the KK shapekeys were generated, something went wrong so don't delete any shapekeys (a headmod likely renamed the shapekeys)
+        it_worked = len([key for key in shapekey_block if 'KK Eyes' in key.name]) > 25 and len([key for key in shapekey_block if 'KK Mouth' in key.name]) > 50
+        if it_worked:
             for remove_shapekey in shapekey_block:
                 try:
                     if ('KK ' not in remove_shapekey.name and remove_shapekey.name != shapekey_block[0].name):
@@ -579,7 +586,7 @@ class modify_mesh(bpy.types.Operator):
                     c.kklog('Couldn\'t remove shapekey ' + remove_shapekey.name, 'error')
                     pass
         else:
-            c.kklog('Original shapekeys were not deleted', 'warn')
+            c.kklog('All shapekeys did not generate. Partial shapekeys will not be deleted', 'warn')
         #make the basis shapekey active
         c.get_body().active_shape_key_index = 0
         #and reset the pivot point to median
@@ -592,19 +599,18 @@ class modify_mesh(bpy.types.Operator):
             value = value[0]['blendShapeWeight'][0] / 100
             shapekey_block = bpy.data.shape_keys[c.get_body().data.shape_keys.name].key_blocks
             for shapekey in shapekey_block:
-                if shapekey.name.startswith('KK') and shapekey.name.find('Eyes') >= 0:
+                if shapekey.name.startswith('KK Eyes'):
                     shapekey.slider_max = 1 - value
 
-            c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_min = value
-            c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].value = value
-            c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = 1
+            if 'KK Eyes_default_cl' in shapekey_block:
+                c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_min = value
+                c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].value = value
+                c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = 1
 
             c.print_timer('correct shapekeys')
 
     def create_tear_shapekeys(self):
         '''Separate tears from body and create tear shapekeys'''
-        if bpy.context.scene.kkbp.shapekeys_dropdown not in ['A', 'B']:
-            return
         # check if the tear material even exists
         try:
             tear_material_name = c.get_material_names('cf_O_namida_L')[0]
@@ -733,7 +739,7 @@ class modify_mesh(bpy.types.Operator):
 
     def create_gag_eye_shapekeys(self):
         '''Separate gag eyes from body and create gag eye shapekeys'''
-        if bpy.context.scene.kkbp.shapekeys_dropdown not in ['A', 'B'] or len(c.get_material_names('cf_O_gag_eye_00')) == 0:
+        if len(c.get_material_names('cf_O_gag_eye_00')) == 0:
             return
         bpy.context.view_layer.objects.active=c.get_body()
         gag_keys = [
