@@ -296,6 +296,13 @@ class post_operations(bpy.types.Operator):
     @classmethod
     def apply_rigify(cls):
         self = cls
+        
+        #Activate the Rigify addon if it isn't already enabled.
+        if "rigify" not in bpy.context.preferences.addons:
+            bpy.ops.preferences.addon_enable(module='rigify')
+            bpy.ops.wm.save_userpref()
+            c.kklog('Rigify was not enabled. Enabling it now...', 'warn')
+
         #correct some bone layering errors. I don't feel like tracking these down, so do it here before the rigify script
         layer0_bones = [
             'MasterFootIK.L',
