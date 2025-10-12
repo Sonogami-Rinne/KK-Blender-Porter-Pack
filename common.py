@@ -226,6 +226,7 @@ def get_import_path() -> str:
 
 def is_svs():
     return bpy.context.scene.kkbp.is_svs
+
 def get_prefix():
     return 'SVS' if bpy.context.scene.kkbp.is_svs else 'KK'
 

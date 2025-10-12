@@ -31,7 +31,6 @@ class modify_mesh(bpy.types.Operator):
     def execute(self, context):
         try:
             is_svs = c.is_svs()
-            # light_dark_mode = is_svs or c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture')
             self.rename_uv_maps()
 
             self.clean_up_duplicates()
@@ -39,9 +38,6 @@ class modify_mesh(bpy.types.Operator):
             self.separate_hair()
             self.separate_alternate_clothing()
             self.delete_shad_bone()
-
-            # if light_dark_mode and not is_svs:
-            #     self.delete_eyeline_down()
 
             if not is_svs:
                 self.separate_hitboxes()
@@ -73,13 +69,13 @@ class modify_mesh(bpy.types.Operator):
                 c.kklog(f'Renamed duplicate body material {material.name} to {new_name}')
                 material.name = new_name
                 material['id'] = new_name
-                material['name'] = new_name
+                material['name'] = c.get_name()
 
     # %% Main functions
     def separate_rigged_tongue(self):
         """
         Separates the rigged tongue object from the main body mesh.
-        If no rigged tongue, create one if general tongue exists
+        If there's no rigged tongue, create one if the general tongue exists
         """
 
         rigged_tongue_material = None
@@ -87,7 +83,7 @@ class modify_mesh(bpy.types.Operator):
         tongue_datas = c.json_file_manager.get_material_info_by_smr('o_tang')
 
         if tongue_datas is None:
-            c.kklog('No tongue', 'warn')
+            c.kklog('No tongue material was found', 'warn')
             c.print_timer('Skipped')
             return
 
@@ -114,14 +110,14 @@ class modify_mesh(bpy.types.Operator):
 
             ori_material = bpy.data.materials[general_tongue_material]
 
-            # rename original material to .001, so we do not need to change the faces' s material to new one
-            ori_material['name'] = rigged_tongue_material
+            # rename original material to .001, so we do not need to change the faces's material to new one
+            ori_material['name'] = c.get_name()
             ori_material['id'] = rigged_tongue_material
             ori_material.name = rigged_tongue_material
 
             new_material = ori_material.copy()
 
-            new_material['name'] = general_tongue_material
+            new_material['name'] = c.get_name()
             new_material['id'] = general_tongue_material
             new_material.name = general_tongue_material
 
@@ -158,7 +154,6 @@ class modify_mesh(bpy.types.Operator):
         outfits = c.get_outfits()
 
         #Separate the hair from each outfit
-        # material_data = c.json_file_manager.get_json_file('KK_MaterialDataComplete.json')
         material_data = c.json_file_manager.get_materials_info()
         hair_materials = [
             material['MaterialName']
@@ -227,13 +222,12 @@ class modify_mesh(bpy.types.Operator):
         if shadowcast:
             bpy.data.objects.remove(shadowcast)
 
-        #Delete the bonelyfans mesh if any
-        # mat_list = ['Bonelyfans', 'Bonelyfans.001']
-        # some model have .002, even .003, .004
+        # Delete the bonelyfans mesh if any
         mat_list = c.get_material_names('Highlight_o_body_a_rend')
         mat_list.extend(c.get_material_names('Highlight_cf_O_face_rend'))
         mat_list = list(set(mat_list))
         extended = []
+        #some model have .002, even .003, .004
         for mat in mat_list:
             index = 1
             while bpy.data.materials.get((name := f'{mat}.{index:03d}')):
@@ -243,18 +237,8 @@ class modify_mesh(bpy.types.Operator):
         mat_list.extend(extended)
         bonely = self.separate_materials(c.get_body(), mat_list, 'bonelyfans')
         if bonely:
-            if c.json_file_manager.get_json_file("KK_KKBPExporterConfig.json").get("exportLightDarkTexture"):
-                bpy.data.objects.remove(bonely)
-            else:
-                bonely['bonelyfans'] = True
-                bonely['name'] = bpy.context.scene.kkbp.character_name
-            # bpy.data.objects.remove(bonely)
+            bpy.data.objects.remove(bonely)
         c.print_timer('delete_shad_bone')
-
-    def delete_eyeline_down(self):
-        if eyeline := self.separate_materials(c.get_body(), ["cf_m_eyeline_down"], 'eyeline down'):
-            bpy.data.objects.remove(eyeline)
-        c.print_timer('delete_eyeline_down')
 
     def separate_hitboxes(self):
         '''Separate the hitbox mesh, if present'''
@@ -289,7 +273,7 @@ class modify_mesh(bpy.types.Operator):
         c.print_timer('separate_hitboxes')
 
     def delete_mask_quad(self):
-        '''delete the mask material if not in smr mode'''
+        '''delete the mask material'''
         material_names = []
         material_data = c.json_file_manager.get_materials_info()
         for smr_name, smr_infos in material_data.items():
@@ -321,7 +305,7 @@ class modify_mesh(bpy.types.Operator):
         c.print_timer('remove_unused_shapekeys')
 
     def rename_uv_maps(self):
-        #Make UV map names clearer
+        '''Make UV map names clearer'''
         c.get_body().data.uv_layers[0].name = 'uv_main'
         c.get_body().data.uv_layers[1].name = 'uv_nipple_and_shine'
         c.get_body().data.uv_layers[2].name = 'uv_underhair'
@@ -430,31 +414,10 @@ class modify_mesh(bpy.types.Operator):
             "_l_":                  "_big_",
         }
 
-        c.get_body().active_shape_key_index = 0
-
-        originalExists = False
-        for shapekey in bpy.data.shape_keys:
-            for keyblock in shapekey.key_blocks:
-                #check if the original shapekeys still exists
-                if 'Basis' not in keyblock.name:
-                    if 'Lips' in keyblock.name:
-                        originalExists = True
-
         #rename original shapekeys
-        for shapekey in bpy.data.shape_keys:
-            for keyblock in shapekey.key_blocks:
-                for key in translation_dict:
-                    if 'gageye' not in keyblock.name:
-                        keyblock.name = keyblock.name.replace(key, translation_dict[key])
-                try:
-                    #delete the KK shapekeys if the original shapekeys still exist
-                    if originalExists and 'KK ' in keyblock.name and 'KK Eyebrows' not in keyblock.name:
-                        c.get_body().active_shape_key_index = c.get_body().data.shape_keys.key_blocks.keys().index(keyblock.name)
-                        bpy.ops.object.shape_key_remove() #only way to do this is with ops?
-                except:
-                    #or not
-                    c.kklog("Couldn't delete shapekey: " + keyblock.name, 'error')
-                    pass
+        for keyblock in c.get_body().data.shape_keys.key_blocks:
+            for key in translation_dict:
+                keyblock.name = keyblock.name.replace(key, translation_dict[key])
         c.print_timer('translate_shapekeys')
 
     def combine_shapekeys(self):
@@ -497,7 +460,7 @@ class modify_mesh(bpy.types.Operator):
         correctionList = ['_u_small_op', '_u_big_op', '_e_big_op', '_o_small_op', '_o_big_op', '_neko_op', '_triangle_op']
         shapekey_block = c.get_body().data.shape_keys.key_blocks
 
-        ACTIVE = 0.9
+        ACTIVE = 1.0
         def activate_shapekey(key_act):
             if shapekey_block.get(key_act) != None:
                 shapekey_block[key_act].value = ACTIVE
@@ -516,7 +479,7 @@ class modify_mesh(bpy.types.Operator):
                     emotion = current_keyblock.name[current_keyblock.name.find("_"):]
                     #go through every shapekey to check if any match the current shapekey's emotion
                     for supporting_shapekey in shapekey_block:
-                        #If the's emotion matches the current one and is the correct category...
+                        #If the emotion matches the current one and is the correct category...
                         if emotion in supporting_shapekey.name and cat == whatCat(supporting_shapekey.name):
                             #and this key has hasn't been used yet activate it, else skip to the next
                             if (supporting_shapekey.name not in used):
@@ -529,40 +492,41 @@ class modify_mesh(bpy.types.Operator):
                         if cor in current_keyblock.name:
                             correction_needed = True
                     if correction_needed:
-                        activate_shapekey('Fangs_default_op')
-                        activate_shapekey('Teeth_default_op')
-                        activate_shapekey('Tongue_default_op')
+                        for key in ['Fangs_default_op', 'Teeth_default_op', 'Tongue_default_op']:
+                            inUse.append(key)
+                            activate_shapekey(key)
                     if ('_e_small_op' in current_keyblock.name):
-                        activate_shapekey('Fangs_default_op')
-                        activate_shapekey('Lips_e_small_op')
+                        for key in ['Fangs_default_op', 'Lips_e_small_op']:
+                            inUse.append(key)
+                            activate_shapekey(key)
                     if ('_cartoon_mouth_op' in current_keyblock.name):
-                        activate_shapekey('Tongue_default_op')
-                        activate_shapekey('Lips_cartoon_mouth_op')
+                        for key in['Tongue_default_op', 'Lips_cartoon_mouth_op']:
+                            inUse.append(key)
+                            activate_shapekey(key)
                     if ('_smile_sharp_op' in current_keyblock.name and cat == 'Mouth'):
                         if shapekey_block.get('Teeth_smile_sharp_op1') != None:
                             shapekey_block['Teeth_smile_sharp_op1'].value = 0
                         activate_shapekey('Lips_smile_sharp_op')
                     if ('_eating_2_op' in current_keyblock.name):
-                        activate_shapekey('Fangs_default_op')
-                        activate_shapekey('Teeth_tongue_out_op')
-                        activate_shapekey('Tongue_serious_2_op')
-                        activate_shapekey('Lips_eating_2_op')
+                        for key in ['Fangs_default_op', 'Teeth_tongue_out_op', 'Tongue_serious_2_op', 'Lips_eating_2_op']:
+                            inUse.append(key)
+                            activate_shapekey(key)
                     if ('_i_big_op' in current_keyblock.name):
-                        activate_shapekey('Teeth_i_big_cl')
-                        activate_shapekey('Fangs_default_op')
-                        activate_shapekey('Lips_i_big_op')
+                        for key in ['Teeth_i_big_cl', 'Fangs_default_op', 'Lips_i_big_op']:
+                            inUse.append(key)
+                            activate_shapekey(key)
                     if ('_i_small_op' in current_keyblock.name):
-                        activate_shapekey('Teeth_i_small_cl')
-                        activate_shapekey('Fangs_default_op')
-                        activate_shapekey('Lips_i_small_op')
+                        for key in ['Teeth_i_small_cl', 'Fangs_default_op', 'Lips_i_small_op']:
+                            inUse.append(key)
+                            activate_shapekey(key)
                     if (current_keyblock.name not in used):
                         c.get_body().shape_key_add(name=('KK ' + cat + emotion))
                     #make sure this shapekey set isn't used again
                     used.extend(inUse)
-                    inUse =[]
                     #reset all shapekey values
-                    for reset_keyblock in shapekey_block:
-                        reset_keyblock.value = 0
+                    for key in [i for i in inUse if i in shapekey_block]:
+                        shapekey_block[key].value = 0
+                    inUse = []
                 #lazy crash prevention
                 if counter % 20 == 0:
                     bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
@@ -572,10 +536,15 @@ class modify_mesh(bpy.types.Operator):
         for key in eyebrow_keys:
             c.get_body().active_shape_key_index = c.get_body().data.shape_keys.key_blocks.keys().index(key.name)
             bpy.ops.object.shape_key_move(type='BOTTOM') #Non-ops way to do this?
+        
+        #Move the gageye shapekey to the bottom of the list because the user should not be activating that one manually
+        if 'KK Eyes_gageye' in shapekey_block:
+            c.get_body().active_shape_key_index = c.get_body().data.shape_keys.key_blocks.keys().index('KK Eyes_gageye')
+            bpy.ops.object.shape_key_move(type='BOTTOM')
 
         #Delete all shapekeys that don't have a "KK" in their name
         #Don't delete the Basis shapekey though
-        #If not all of the KK shapekeys were generated, something went wrong so don't delete any shapekeys (a headmod likely renamed the shapekeys)
+        #If every KK shapekey was not generated, something went wrong so don't delete any shapekeys (a headmod likely renamed the shapekeys, so these would be lost if deleted)
         it_worked = len([key for key in shapekey_block if 'KK Eyes' in key.name]) > 25 and len([key for key in shapekey_block if 'KK Mouth' in key.name]) > 50
         if it_worked:
             for remove_shapekey in shapekey_block:
@@ -586,11 +555,9 @@ class modify_mesh(bpy.types.Operator):
                     c.kklog('Couldn\'t remove shapekey ' + remove_shapekey.name, 'error')
                     pass
         else:
-            c.kklog('All shapekeys did not generate. Partial shapekeys will not be deleted', 'warn')
+            c.kklog('All shapekeys did not generate. Partial shapekeys will not be deleted', 'error')
         #make the basis shapekey active
         c.get_body().active_shape_key_index = 0
-        #and reset the pivot point to median
-        bpy.context.scene.tool_settings.transform_pivot_point = 'MEDIAN_POINT'
         c.print_timer('combine_shapekeys')
 
     def correct_shapekeys(self):
@@ -634,7 +601,7 @@ class modify_mesh(bpy.types.Operator):
             loc += y
         middle_of_head = loc / len(selected_verts)
         c.switch(c.get_body(), 'edit')
-        tear_mats = {
+        tear_and_gag_mats = {
             'cf_O_namida_L': ("Tears big", []),
             'cf_O_namida_M': ("Tears med", []),
             'cf_O_namida_S': ('Tears small', []),
@@ -642,7 +609,7 @@ class modify_mesh(bpy.types.Operator):
             'cf_O_gag_eye_01': ("Gag eye 01", []),
             'cf_O_gag_eye_02': ("Gag eye 02", []),
         }
-        for cat, cat_data in tear_mats.items():
+        for cat, cat_data in tear_and_gag_mats.items():
             mats = c.get_material_names(cat)
             if (m_flag := ('M' in cat)) or 'S' in cat:
                 mats = [m + ('.001' if m_flag else '.002') for m in
@@ -660,7 +627,7 @@ class modify_mesh(bpy.types.Operator):
         bpy.ops.transform.translate(value=(0, abs(amount_to_move_tears_back), 0))
 
         # move the tears forwards again the same amount in individual new shapekeys
-        for cat, cat_data in tear_mats.items():
+        for cat, cat_data in tear_and_gag_mats.items():
             for mat in cat_data[1]:
                 c.switch(c.get_body(), 'object')
                 bpy.ops.object.shape_key_add(from_mix=False)
@@ -677,7 +644,7 @@ class modify_mesh(bpy.types.Operator):
                 # find a random vertex location of the tear and move it forwards
                 c.switch(c.get_body(), 'object')
                 bpy.ops.object.mode_set(mode='EDIT')
-                bpy.ops.transform.translate(value=(0, -1 * abs(amount_to_move_tears_back), 0))
+                bpy.ops.transform.translate(value=(0, -1 * (abs(amount_to_move_tears_back) + abs(0.002)), 0))
                 c.switch(c.get_body(), 'object')
                 bpy.ops.object.shape_key_move(type='TOP' if tear_material_name in mat else 'BOTTOM')
 
@@ -706,9 +673,9 @@ class modify_mesh(bpy.types.Operator):
         # Merge the tear materials
         c.switch(c.get_body(), 'edit')
 
-        to_merge_materials = tear_mats['cf_O_namida_L'][1]
-        to_merge_materials.extend(tear_mats['cf_O_namida_M'][1])
-        to_merge_materials.extend(tear_mats['cf_O_namida_S'][1])
+        to_merge_materials = tear_and_gag_mats['cf_O_namida_L'][1]
+        to_merge_materials.extend(tear_and_gag_mats['cf_O_namida_M'][1])
+        to_merge_materials.extend(tear_and_gag_mats['cf_O_namida_S'][1])
 
         for mat in to_merge_materials:
             bpy.context.object.active_material_index = c.get_body().data.materials.find(mat)
@@ -741,7 +708,6 @@ class modify_mesh(bpy.types.Operator):
         '''Separate gag eyes from body and create gag eye shapekeys'''
         if len(c.get_material_names('cf_O_gag_eye_00')) == 0:
             return
-        bpy.context.view_layer.objects.active=c.get_body()
         gag_keys = [
             'Circle Eyes 1',
             'Circle Eyes 2',
@@ -754,12 +720,11 @@ class modify_mesh(bpy.types.Operator):
             'Horizontal Line',
             'Cartoony Crying'
         ]
+        c.switch(c.get_body(), 'object')
         for key in gag_keys:
-            bpy.ops.object.mode_set(mode = 'OBJECT')
             bpy.ops.object.shape_key_add(from_mix=False)
-            last_shapekey = len(c.get_body().data.shape_keys.key_blocks)-1
             c.get_body().data.shape_keys.key_blocks[-1].name = key
-            bpy.context.object.active_shape_key_index = last_shapekey
+            bpy.context.object.active_shape_key_index = c.get_body().data.shape_keys.key_blocks.keys().index(key)
             bpy.ops.object.shape_key_move(type='TOP')
 
         def create_gag_eye_driver(keyblock: str, condition: str):
@@ -835,7 +800,7 @@ class modify_mesh(bpy.types.Operator):
         c.print_timer('ignored gag_eye_shapekeys')
 
     def remove_body_seams(self):
-        '''merge certain materials for the body object to prevent odd shading issues later on'''
+        '''merge the edges of certain body materials to prevent odd shading issues later on'''
         if not bpy.context.scene.kkbp.fix_seams:
             return
         c.switch(c.get_body(), 'edit')
@@ -883,7 +848,6 @@ class modify_mesh(bpy.types.Operator):
         bpy.ops.object.mode_set(mode = 'OBJECT')
         c.print_timer('mark_body_freestyle_faces')
 
-
     def separate_materials(self, object: bpy.types.Object, mat_list: list[bpy.types.Material], new_object_name: str, search_type = 'exact') -> bpy.types.Object:
         '''Separates the materials in the mat_list on object, and renames the separated object to "new_object_name". 
         Returns the separated object, or None if there was an error'''
@@ -898,11 +862,6 @@ class modify_mesh(bpy.types.Operator):
                 mat_found = object.data.materials.find(mat)
             if mat_found > -1:
                 bpy.context.object.active_material_index = mat_found
-                #moves the materials in a specific order to prevent transparency issues on body
-                def moveUp():
-                    return bpy.ops.object.material_slot_move(direction='UP')
-                while moveUp() != {"CANCELLED"}:
-                    pass
                 bpy.ops.object.material_slot_select()
             else:
                 c.kklog('Material wasn\'t found when separating materials: ' + mat, 'warn')
