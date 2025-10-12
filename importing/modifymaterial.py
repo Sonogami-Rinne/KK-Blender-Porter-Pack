@@ -129,6 +129,7 @@ class modify_material(bpy.types.Operator):
         pass
 
     def load_materials(self):
+        c.switch(c.get_body(), 'object')
         templateList = [
             'KK Body',
             'KK Tears',
