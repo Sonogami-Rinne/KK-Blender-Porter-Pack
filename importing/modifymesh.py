@@ -31,7 +31,7 @@ class modify_mesh(bpy.types.Operator):
     def execute(self, context):
         try:
             is_svs = c.is_svs()
-            light_dark_mode = is_svs or c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture')
+            # light_dark_mode = is_svs or c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture')
             self.rename_uv_maps()
 
             self.clean_up_duplicates()
@@ -40,8 +40,8 @@ class modify_mesh(bpy.types.Operator):
             self.separate_alternate_clothing()
             self.delete_shad_bone()
 
-            if light_dark_mode and not is_svs:
-                self.delete_eyeline_down()
+            # if light_dark_mode and not is_svs:
+            #     self.delete_eyeline_down()
 
             if not is_svs:
                 self.separate_hitboxes()
@@ -346,8 +346,8 @@ class modify_mesh(bpy.types.Operator):
             "kuti_face.f00":        "Lips",
             "eye_siroL.sL00":       "EyeWhitesL",
             "eye_siroR.sR00":       "EyeWhitesR",
-            "eye_line_u.elu00":     "Eyelashes1",
-            "eye_line_l.ell00":     "Eyelashes2",
+            "eye_line_u.elu00":     "EyelashesUp",
+            "eye_line_l.ell00":     "EyelashesDown",
             # "eye_naM.naM00":        "EyelashesPos",
             "eye_nose.nl00":        "NoseTop",
             "kuti_nose.nl00":       "NoseBot",
@@ -471,15 +471,19 @@ class modify_mesh(bpy.types.Operator):
         c.get_body().active_shape_key_index = 0
 
         def whatCat(keyName):
-            #Eyelashes1 is used because I couldn't see a difference between the other one and they overlap if both are used
             #EyelashPos is unused because Eyelashes work better and it overlaps with Eyelashes
             eyes = [keyName.find("Eyes"),
             keyName.find("NoseT"),
-            keyName.find("Eyelashes1"),
-            # keyName.find("EyeWhites"),
+            keyName.find("EyelashesUp"),
+            keyName.find("EyelashesDown"),
             keyName.find('Tear_big'),
             keyName.find('Tear_med'),
             keyName.find('Tear_small')]
+            # The eyewhites will clip through the eyes if this key is activated. This can be fixed by adjusting the material order in Blender.
+            # I don't know if this will work in other programs though, so I'm only going to activate it if the user has chosen the Rigify armature.
+            # This give me some kind of hint that the user will only be using the model in blender, so it's okay that they clip because it can be fixed
+            if bpy.context.scene.kkbp.armature_dropdown == 'Rigify':
+                eyes.append(keyName.find("EyeWhites"))
             if not all(v == -1 for v in eyes):
                 return 'Eyes'
             mouth = [keyName.find("NoseB"),
@@ -568,6 +572,13 @@ class modify_mesh(bpy.types.Operator):
                 #lazy crash prevention
                 if counter % 20 == 0:
                     bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+        
+        #Move all of the KK Eyebrow shapekeys to the bottom of the list
+        eyebrow_keys = [key for key in shapekey_block if 'KK Eyebrows' in key.name]
+        for key in eyebrow_keys:
+            c.get_body().active_shape_key_index = c.get_body().data.shape_keys.key_blocks.keys().index(key.name)
+            bpy.ops.object.shape_key_move(type='BOTTOM') #Non-ops way to do this?
+
         #Delete all shapekeys that don't have a "KK" in their name
         #Don't delete the Basis shapekey though
         #If not all of the KK shapekeys were generated, something went wrong so don't delete any shapekeys
