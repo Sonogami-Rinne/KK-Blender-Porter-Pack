@@ -78,6 +78,7 @@ class modify_material(bpy.types.Operator):
                 self.ELDT_load_images()
                 self.ELDT_replace_materials_and_link_textures_adjust_UV()
                 self.SVS_set_body_alpha_mask()
+                self.change_eyeline_render_method()
             else:
                 self.replace_materials_for_body()
                 self.replace_materials_for_hair()
@@ -675,6 +676,14 @@ class modify_material(bpy.types.Operator):
                 break
 
         material.node_tree.update_tag()
+
+    def change_eyeline_render_method(self):
+        prefix = c.get_prefix()
+        mats = c.get_material_names('cf_O_eyeline')
+        mats.extend(c.get_material_names('cf_O_eyeline_low'))
+        for mat in mats:
+            material = bpy.data.materials.get(f'{prefix} ' + mat)
+            material.surface_render_method = 'BLENDED'
 
 
     def link_textures_for_face_body(self):

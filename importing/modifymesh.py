@@ -40,9 +40,6 @@ class modify_mesh(bpy.types.Operator):
             self.separate_alternate_clothing()
             self.delete_shad_bone()
 
-            if light_dark_mode and not is_svs:
-                self.delete_eyeline_down()
-
             if not is_svs:
                 self.separate_hitboxes()
                 self.delete_mask_quad()
@@ -252,10 +249,6 @@ class modify_mesh(bpy.types.Operator):
             # bpy.data.objects.remove(bonely)
         c.print_timer('delete_shad_bone')
 
-    def delete_eyeline_down(self):
-        if eyeline := self.separate_materials(c.get_body(), ["cf_m_eyeline_down"], 'eyeline down'):
-            bpy.data.objects.remove(eyeline)
-        c.print_timer('delete_eyeline_down')
 
     def separate_hitboxes(self):
         '''Separate the hitbox mesh, if present'''
