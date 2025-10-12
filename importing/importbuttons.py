@@ -23,9 +23,6 @@ class kkbp_import(bpy.types.Operator):
     filter_glob : bpy.props.StringProperty(default='*.pmx', options={'HIDDEN'})
     
     def execute(self, context):
-        #do this thing because cats does it
-        if hasattr(bpy.context.scene, 'layers'):
-            bpy.context.scene.layers[0] = True
 
         #delete the default scene if present
         if len(bpy.data.objects) == 3:
@@ -46,38 +43,24 @@ class kkbp_import(bpy.types.Operator):
         #save filepath for later
         bpy.context.scene.kkbp.import_dir = str(self.filepath)[:-9] if self.filepath else bpy.context.scene.kkbp.import_dir
 
-        # #delete the cached files if the option is enabled
-        # if bpy.context.scene.kkbp.delete_cache and c.get_import_path():
-        #     c.kklog('Clearing the cache folder...')
-        #     for cache_folder in ['atlas_files', 'baked_files', 'dark_files', 'saturated_files']:
-        #         try:
-        #             for f in os.listdir(os.path.join(c.get_import_path(), cache_folder)):
-        #                 try:
-        #                     os.remove(os.path.join(c.get_import_path(), cache_folder, f))
-        #                 except:
-        #                     pass
-        #         except:
-        #             #that cache folder did not exist
-        #             pass
-
         #check if there is at least one "Outfit ##" folder inside of this directory
         #   if there isn't, then the user incorrectly chose the .pmx file inside of the outfit directory
-        #   correct to the .pmx file inside of the root directory
+        #   correct the path to the .pmx file inside of the root directory
         subdirs = [i[1] for i in os.walk(c.get_import_path())][0]
         outfit_subdirs = [i for i in subdirs if 'Outfit ' in i]
         if not outfit_subdirs:
             bpy.context.scene.kkbp.import_dir = os.path.dirname(os.path.dirname(c.get_import_path()))
             c.kklog('User chose wrong pmx file. Defaulting to pmx file located at ' + str(c.get_import_path()), 'warn')
         
-        try:
+        if '_' in c.get_import_path():
             #get the character name and use it for some things later on
             bpy.context.scene.kkbp.character_name = c.get_import_path().replace(os.path.dirname(os.path.dirname(c.get_import_path())), '').split('_', maxsplit = 1)[1][:-1]
-        except:
+        else:
             #the user renamed the export folder, so there was no underscore. Just use the folder name instead (is the name not saved to the json files?)
             bpy.context.scene.kkbp.character_name = c.get_import_path().replace(os.path.dirname(os.path.dirname(c.get_import_path())), '')[1:-1]
-        #remove any dots from the character name or blender will get confused when creating an atlas
+        #remove any dots from the character name or blender will get confused when creating the atlas later on
         bpy.context.scene.kkbp.character_name = bpy.context.scene.kkbp.character_name.replace('.', '')
-        #but if the name is longer than 64 characters, blender will cut off the name, leading to some issues later on. 
+        #and if the name is longer than 64 characters, blender will cut off the name, leading to some issues later on. 
         #The longest material I've encountered is "KK acs_M_nose_tama_00 1290 " and the longest suffix will always be " light.png" at 37 total characters
         #so I'll arbitrarily cut off the name at 24 characters to be safe (needs to be an even number). The .encode() is used to handle multibyte characters like japanese / korean names
         if len(bpy.context.scene.kkbp.character_name.encode()) >= 24:
@@ -91,10 +74,6 @@ class kkbp_import(bpy.types.Operator):
             if force_current_pose:
                 bpy.context.scene.kkbp.armature_dropdown = 'FK'
 
-        # #force no dark colors if Cycles classic is chosen as the shader (this mode does not use dark colors at all)
-        # if bpy.context.scene.kkbp.shader_dropdown == 'D':
-        #     bpy.context.scene.kkbp.colors_dropdown = False
-
         functions = [
                 lambda:bpy.ops.kkbp.modifymesh('INVOKE_DEFAULT'),
                 lambda:bpy.ops.kkbp.modifyarmature('INVOKE_DEFAULT'),
@@ -102,7 +81,6 @@ class kkbp_import(bpy.types.Operator):
                 lambda:bpy.ops.kkbp.postoperations('INVOKE_DEFAULT'),
             ]
         
-
         #run functions
         c.toggle_console()
         self.import_pmx_models()
@@ -125,32 +103,24 @@ class kkbp_import(bpy.types.Operator):
             for file in [f for f in files if f == 'model.pmx']:
                 pmx_path = os.path.join(subdir, file)
                 outfit = 'Outfit' in subdir
+                outfit_id = str(subdir[-2:])
 
                 #import the pmx file with mmd_tools
-                if bpy.app.version[0] == 3:
-                    bpy.ops.mmd_tools.import_model('EXEC_DEFAULT',
-                        files=[{'name': pmx_path}],
-                        directory=pmx_path,
-                        scale=1,
-                        clean_model = False,
-                        types={'MESH', 'ARMATURE', 'MORPHS'} if not outfit else {'MESH'},
-                        log_level='WARNING')
-                else:
-                    bpy.ops.mmd_tools.import_model('EXEC_DEFAULT',
-                        filepath=pmx_path,
-                        scale=1,
-                        clean_model = False,
-                        types={'MESH', 'ARMATURE', 'MORPHS'} if not outfit else {'MESH', 'ARMATURE'})
+                bpy.ops.mmd_tools.import_model('EXEC_DEFAULT',
+                    filepath=pmx_path,
+                    scale=1,
+                    clean_model = False,
+                    types={'MESH', 'ARMATURE', 'MORPHS'} if not outfit else {'MESH', 'ARMATURE'})
 
-                #tag the newly import object after pmx import. The active object is the empty, so apply it to the armature and the mesh
+                #tag the newly imported object. The active object is the empty, so apply it to the armature and the mesh
                 bpy.context.view_layer.objects.active['name'] = c.get_name()
                 bpy.context.view_layer.objects.active.children[0]['name'] = c.get_name()
                 bpy.context.view_layer.objects.active.children[0].children[0]['name'] = c.get_name()
                 #keep track of the outfit ID if this is an outfit
                 if outfit:
-                    bpy.context.view_layer.objects.active.children[0].children[0]['id'] = str(subdir[-2:])
+                    bpy.context.view_layer.objects.active.children[0].children[0]['id'] = outfit_id
                     bpy.context.view_layer.objects.active.children[0].children[0]['outfit'] = True
-                    bpy.context.view_layer.objects.active.children[0].children[0].name = 'Outfit ' + str(subdir[-2:]) + ' ' + c.get_name()
+                    bpy.context.view_layer.objects.active.children[0].children[0].name = f'Outfit {outfit_id} {c.get_name()}'
                 else:
                     bpy.context.view_layer.objects.active.children[0].children[0].name = 'Body ' + c.get_name()
                     bpy.context.view_layer.objects.active.children[0].children[0]['body'] = True
