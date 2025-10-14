@@ -296,92 +296,37 @@ class post_operations(bpy.types.Operator):
     @classmethod
     def apply_rigify(cls):
         self = cls
+
+        if not bpy.context.scene.kkbp.armature_dropdown == 'Rigify':
+            return
         
-        #Activate the Rigify addon if it isn't already enabled.
+        #Activate the built in Rigify addon if it isn't already enabled.
         if "rigify" not in bpy.context.preferences.addons:
             c.kklog('Rigify was not enabled. Enabling it now...', 'warn')
             bpy.ops.preferences.addon_enable(module='rigify')
             bpy.ops.wm.save_userpref()
-
-        #correct some bone layering errors. I don't feel like tracking these down, so do it here before the rigify script
-        layer0_bones = [
-            'MasterFootIK.L',
-            'MasterFootIK.R',
-            'Eyesx',
-            'cf_pv_root_upper',
-            'cf_pv_elbo_R',
-            'cf_pv_elbo_L',
-            'cf_pv_knee_L',
-            'cf_pv_knee_R',
-            'cf_pv_hand_L',
-            'cf_pv_hand_R',
-        ]
-        layer1_bones = [
-            'Left toe',
-            'Right toe',
-            'cf_pv_foot_L',
-            'FootPin.L',
-            'ToePin.L',
-            'cf_pv_foot_R',
-            'FootPin.R',
-            'ToePin.R',
-        ]
-        armature = c.get_armature()
-        def set_armature_layer(bone_name, show_layer, hidden = False):
-            '''Assigns a bone to a bone collection.'''
-            bone = armature.data.bones.get(bone_name)
-            if bone:
-                if bpy.app.version[0] == 3:
-                    armature.data.bones[bone_name].layers = (
-                        True, False, False, False, False, False, False, False,
-                        False, False, False, False, False, False, False, False, 
-                        False, False, False, False, False, False, False, False, 
-                        False, False, False, False, False, False, False, False
-                    )
-                    #have to show the bone on both layer 1 and chosen layer before setting it to just chosen layer
-                    armature.data.bones[bone_name].layers[show_layer] = True 
-                    armature.data.bones[bone_name].layers[0] = False
-                    armature.data.bones[bone_name].hide = hidden
-                else:
-                    show_layer = str(show_layer)
-                    bone.collections.clear()
-                    if armature.data.bones.get(bone_name):
-                        if armature.data.collections.get(show_layer):
-                            armature.data.collections[show_layer].assign(armature.data.bones.get(bone_name))
-                        else:
-                            armature.data.collections.new(show_layer)
-                            armature.data.collections[show_layer].assign(armature.data.bones.get(bone_name))
-                        armature.data.bones[bone_name].hide = hidden
         
-        c.switch(armature, 'OBJECT')
-        for bone in layer0_bones:
-            set_armature_layer(bone, 0)
-        for bone in layer1_bones:
-            set_armature_layer(bone, 1)
-        
-        if not bpy.context.scene.kkbp.armature_dropdown == 'Rigify':
-            return
         c.kklog('Running Rigify conversion scripts...')
+        armature = c.get_armature()
         c.switch(armature, 'object')
-        try:
-            bpy.ops.kkbp.rigbefore('INVOKE_DEFAULT')
-            #remove the left ankle and right ankle's super copy prop
-            if bpy.app.version[0] != 3:
-                armature.pose.bones['Left ankle'].rigify_type = ""
-                armature.pose.bones['Right ankle'].rigify_type = ""
-        except:
-            if 'Calling operator "bpy.ops.pose.rigify_layer_init" error, could not be found' in traceback.format_exc():
-                c.kklog("There was an issue preparing the rigify metarig. \nMake sure the Rigify addon is installed and enabled. Skipping operation...", 'error')
-            c.kklog(traceback.format_exc())
-            return
+
+        #run a script to prepare the armature for rigify
+        bpy.ops.kkbp.rigbefore('INVOKE_DEFAULT')
+        #remove the left ankle and right ankle's super copy prop
+        if bpy.app.version[0] != 3:
+            armature.pose.bones['Left ankle'].rigify_type = ""
+            armature.pose.bones['Right ankle'].rigify_type = ""
         
+        #generate the rigify rig
         bpy.ops.pose.rigify_generate()
 
+        #cleanup the generated rigify rig
         bpy.ops.kkbp.rigafter('INVOKE_DEFAULT')
         #make sure the new bones on the generated rig retain the KKBP outfit id entry
         rig = bpy.context.active_object
         rig['rig'] = True
         rig['name'] = c.get_name()
+        rig.name = 'Rig ' + c.get_name()
 
         #Take the IDs from all org bones and copy them over to the generated / helper bones
         for bone in rig.data.bones:

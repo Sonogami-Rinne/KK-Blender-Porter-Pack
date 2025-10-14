@@ -851,13 +851,7 @@ def copyBone(rig, sourceBoneName, newBoneName):
     return newBone
 
 def addBoneCustomProperty(rig, boneName, propertyName, propertyTooltip, propertyValue, propertyMinValue, propertyMaxValue):
-    """ malfunctioning version
-    bone = rig.pose.bones[boneName]
-    bone[propertyName] = propertyValue
-    if "_RNA_UI" not in bone.keys():
-        bone["_RNA_UI"] = {}
-    bone["_RNA_UI"].update({propertyName: {"description":propertyTooltip, "default":propertyValue, "min":propertyMinValue, "max":propertyMaxValue}})
-    """
+    """ Adds a custom property to a bone and returns the data path to it."""
     rna_idprop_ui_create(rig.pose.bones[boneName], propertyName, default = propertyValue, min = propertyMinValue, max = propertyMaxValue, soft_min = None, soft_max = None, description = propertyTooltip)
     return 'pose.bones["' + boneName + '"]["' + propertyName + '"]'
         
@@ -919,17 +913,17 @@ leftLittleFingerPalmBoneName, rightLittleFingerPalmBoneName, leftLittleFingerBon
 rightLittleFingerBone2Name, leftLittleFingerBone3Name, rightLittleFingerBone3Name]
 
 originalIkLayerIndex = 0
-originalFkLayerIndex = 1
+originalFkLayerIndex = 'Core'
 originalPrimaryJointCorrectionLayerIndex = 2
 originalSecondaryJointCorrectionLayerIndex = 3
 originalBetterPenetrationLayerIndex = 4
 originalSkirtLayerIndex = 8
-originalAccessoryLayerIndex = 9
-originalMchLayerIndex = 10
+originalAccessoryLayerIndex = 'Hair/Accessories'
+originalMchLayerIndex = 'Junk'
 originalPhysicsLayerIndex = 11
 originalExtraLayerIndex = 12
-originalUpperFaceLayerIndex = 16
-originalLowerFaceLayerIndex = 17
+originalUpperFaceLayerIndex = 'Face'
+originalLowerFaceLayerIndex = 'Face MCH'
 originalRiggedTongueLayerIndex = 18
 
 temporaryAccessoryMchLayerIndex = 7
@@ -974,7 +968,7 @@ class RigifyLayer(NamedTuple):
         group: int
         
 rigifyLayers = [
-RigifyLayer(hairLayerName, 1, extraBoneGroupIndex),
+RigifyLayer(hairLayerName, hairLayerName, extraBoneGroupIndex),
 RigifyLayer(hairLayerName + detailLayerSuffix, 2, fkBoneGroupIndex),
 RigifyLayer(hairLayerName + mchLayerSuffix, 3, rootBoneGroupIndex),
 RigifyLayer(eyesLayerName + primaryLayerSuffix, 4, extraBoneGroupIndex),
@@ -1004,19 +998,17 @@ RigifyLayer("", 28, noneBoneGroupIndex),
 RigifyLayer(junkLayerName, 29, noneBoneGroupIndex)
 ]
 
-rootLayerIndex = 28
+rootLayerIndex = 'Root'
 rootLayerRow = 30
-defLayerIndex = 29
+defLayerIndex = 'DEF'
 defLayerRow = 31
-mchLayerIndex = 30
+mchLayerIndex = 'MCH'
 mchLayerRow = 31
-orgLayerIndex = 31
+orgLayerIndex = 'ORG'
 orgLayerRow = 31
 
 def getRigifyLayerIndexByName(rigifyLayerName):
-    for index, rigifyLayer in enumerate(rigifyLayers):
-        if rigifyLayer.name == rigifyLayerName:
-            return index
+    return rigifyLayerName
 
 def setRigifyLayer(rig, index, rigifyLayer):
     if bpy.app.version[0] == 3:
@@ -1162,25 +1154,16 @@ def assignSingleBoneLayer_except(rig, boneName, layerIndex):
         pass
         #bone didn't exist
 
-def assignSingleBoneLayer(rig, boneName, layerIndex):
-    if bpy.app.version[0] == 3:
-        original_mode = bpy.context.object.mode
-        bpy.ops.object.mode_set(mode = 'POSE')
-        bone = rig.data.bones[boneName]
-        bone.layers[layerIndex] = True
-        for index in range(32):
-            if index != layerIndex:
-                bone.layers[index] = False
+def assignSingleBoneLayer(rig, boneName: str, layerName: str):
+    original_mode = bpy.context.object.mode
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    bone = rig.data.bones[boneName]
+    bone.collections.clear()
+    if rig.data.collections.get(layerName):
+        rig.data.collections[layerName].assign(bone)
     else:
-        original_mode = bpy.context.object.mode
-        bpy.ops.object.mode_set(mode = 'OBJECT')
-        bone = rig.data.bones[boneName]
-        bone.collections.clear()
-        if rig.data.collections.get(str(layerIndex)):
-            rig.data.collections[str(layerIndex)].assign(bone)
-        else:
-            rig.data.collections.new(str(layerIndex))
-            rig.data.collections[str(layerIndex)].assign(bone)
+        rig.data.collections.new(layerName)
+        rig.data.collections[layerName].assign(bone)
     bpy.ops.object.mode_set(mode = original_mode)
 
 def assignMultipleBoneLayer(rig, boneName, layerIndexes):

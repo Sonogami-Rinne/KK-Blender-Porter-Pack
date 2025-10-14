@@ -145,7 +145,7 @@ class modify_armature(bpy.types.Operator):
                 # self.prepare_ik_bones()
                 # self.create_f_ik_bones()
 
-                # self.create_joint_drivers()
+                self.create_joint_drivers()
 
                 # self.categorize_bones()
                 self.rename_bones_for_clarity()
@@ -606,9 +606,9 @@ class modify_armature(bpy.types.Operator):
                         if bone.children:
                             bone.children[0]['id'] = bone.get('id')
         
-        #move accessory bones to their own armature layers
+        #move accessory bones to their own armature layer
         for bone in [bone for bone in armature.data.bones if bone.get('id') and not bone.get('useless')]:
-            self.set_armature_layer(bone.name, layer_name = 'Hair/Accessories ' + str(bone.get('id')[0]))
+            self.set_armature_layer(bone.name, layer_name = 'Hair/Accessories')# + str(bone.get('id')[0]))
         #reset the bone to be vertical because a lot of these accessory bones are sideways
         c.switch(armature, 'edit')
         for bone in [bone.name for bone in armature.data.bones if bone.get('id') and not bone.get('useless')]:
@@ -1351,198 +1351,198 @@ class modify_armature(bpy.types.Operator):
     #     bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
     #     c.switch(c.get_armature(), 'object')
 
-    # def create_joint_drivers(self):
-    #     '''There are several joint corrections that use the cf_d_ and cf_s_ bones on the armature. This function attempts to replicate them using blender drivers and bone constraints'''
-    #     armature = c.get_armature()
-    #     c.switch(armature, 'pose')
-    #     #generic function to set a copy rotation modifier
-    #     def set_copy(bone, bonetarget, influence, axis = 'all', mix = 'replace', space = 'LOCAL'):
-    #         constraint = armature.pose.bones[bone].constraints.new("COPY_ROTATION")
-    #         constraint.target = armature
-    #         constraint.subtarget = bonetarget
-    #         constraint.influence = influence
-    #         constraint.target_space = space
-    #         constraint.owner_space = space
+    def create_joint_drivers(self):
+        '''There are several joint corrections that use the cf_d_ and cf_s_ bones on the armature. This function attempts to replicate them using blender drivers and bone constraints'''
+        armature = c.get_armature()
+        c.switch(armature, 'pose')
+        #generic function to set a copy rotation modifier
+        def set_copy(bone, bonetarget, influence, axis = 'all', mix = 'replace', space = 'LOCAL'):
+            constraint = armature.pose.bones[bone].constraints.new("COPY_ROTATION")
+            constraint.target = armature
+            constraint.subtarget = bonetarget
+            constraint.influence = influence
+            constraint.target_space = space
+            constraint.owner_space = space
 
-    #         if axis == 'X':
-    #             constraint.use_y = False
-    #             constraint.use_z = False
+            if axis == 'X':
+                constraint.use_y = False
+                constraint.use_z = False
             
-    #         elif axis == 'Y':
-    #             constraint.use_x = False
-    #             constraint.use_z = False
+            elif axis == 'Y':
+                constraint.use_x = False
+                constraint.use_z = False
             
-    #         elif axis == 'antiX':
-    #             constraint.use_y = False
-    #             constraint.use_z = False
-    #             constraint.invert_x = True
+            elif axis == 'antiX':
+                constraint.use_y = False
+                constraint.use_z = False
+                constraint.invert_x = True
             
-    #         elif axis == 'Z':
-    #             constraint.use_x = False
-    #             constraint.use_y = False
+            elif axis == 'Z':
+                constraint.use_x = False
+                constraint.use_y = False
 
-    #         if mix == 'add':
-    #             constraint.mix_mode = 'ADD'
+            if mix == 'add':
+                constraint.mix_mode = 'ADD'
 
-    #     #setup most of the drivers with this
-    #     set_copy('cf_d_shoulder02_L', 'cf_j_arm00_L', 0.5)
-    #     set_copy('cf_d_arm01_L', 'cf_j_arm00_L', 0.75, axis = 'X')
-    #     set_copy('cf_d_arm02_L', 'cf_j_arm00_L', 0.5, axis = 'X')
-    #     set_copy('cf_d_arm03_L', 'cf_j_arm00_L', 0.25, axis = 'X')
-    #     set_copy('cf_d_forearm02_L', 'cf_j_hand_L', 0.33, axis = 'X')
-    #     set_copy('cf_d_wrist_L', 'cf_j_hand_L', 0.33, axis = 'X', )
-    #     set_copy('cf_d_kneeF_L', 'cf_j_leg01_L', 0.5, axis = 'antiX', mix = 'add')
-    #     set_copy('cf_d_siri_L', 'cf_j_thigh00_L', 0.33)
-    #     set_copy('cf_d_thigh02_L', 'cf_j_thigh00_L', 0.25, axis='Y')
-    #     set_copy('cf_d_thigh03_L', 'cf_j_thigh00_L', 0.25, axis='Y')
-    #     set_copy('cf_d_leg02_L', 'cf_j_leg01_L', 0.33, axis='Y')
-    #     set_copy('cf_d_leg03_L', 'cf_j_leg01_L', 0.66, axis='Y')
+        #setup most of the drivers with this
+        set_copy('cf_d_shoulder02_L', 'cf_j_arm00_L', 0.5)
+        set_copy('cf_d_arm01_L', 'cf_j_arm00_L', 0.75, axis = 'X')
+        set_copy('cf_d_arm02_L', 'cf_j_arm00_L', 0.5, axis = 'X')
+        set_copy('cf_d_arm03_L', 'cf_j_arm00_L', 0.25, axis = 'X')
+        set_copy('cf_d_forearm02_L', 'cf_j_hand_L', 0.33, axis = 'X')
+        set_copy('cf_d_wrist_L', 'cf_j_hand_L', 0.33, axis = 'X', )
+        set_copy('cf_d_kneeF_L', 'cf_j_leg01_L', 0.5, axis = 'antiX', mix = 'add')
+        set_copy('cf_d_siri_L', 'cf_j_thigh00_L', 0.33)
+        set_copy('cf_d_thigh02_L', 'cf_j_thigh00_L', 0.25, axis='Y')
+        set_copy('cf_d_thigh03_L', 'cf_j_thigh00_L', 0.25, axis='Y')
+        set_copy('cf_d_leg02_L', 'cf_j_leg01_L', 0.33, axis='Y')
+        set_copy('cf_d_leg03_L', 'cf_j_leg01_L', 0.66, axis='Y')
 
-    #     set_copy('cf_d_shoulder02_R', 'cf_j_arm00_R', 0.5)
-    #     set_copy('cf_d_arm01_R', 'cf_j_arm00_R', 0.75, axis = 'X')
-    #     set_copy('cf_d_arm02_R', 'cf_j_arm00_R', 0.5, axis = 'X')
-    #     set_copy('cf_d_arm03_R', 'cf_j_arm00_R', 0.25, axis = 'X')
-    #     set_copy('cf_d_forearm02_R', 'cf_j_hand_R', 0.33, axis = 'X')
-    #     set_copy('cf_d_wrist_R', 'cf_j_hand_R', 0.33, axis = 'X')
-    #     set_copy('cf_d_kneeF_R', 'cf_j_leg01_R', 0.5, axis = 'antiX', mix = 'add')
-    #     set_copy('cf_d_siri_R', 'cf_j_thigh00_R', 0.33)
-    #     set_copy('cf_d_thigh02_R', 'cf_j_thigh00_R', 0.25, axis='Y')
-    #     set_copy('cf_d_thigh03_R', 'cf_j_thigh00_R', 0.25, axis='Y')
-    #     set_copy('cf_d_leg02_R', 'cf_j_leg01_R', 0.33, axis='Y')
-    #     set_copy('cf_d_leg03_R', 'cf_j_leg01_R', 0.66, axis='Y')
+        set_copy('cf_d_shoulder02_R', 'cf_j_arm00_R', 0.5)
+        set_copy('cf_d_arm01_R', 'cf_j_arm00_R', 0.75, axis = 'X')
+        set_copy('cf_d_arm02_R', 'cf_j_arm00_R', 0.5, axis = 'X')
+        set_copy('cf_d_arm03_R', 'cf_j_arm00_R', 0.25, axis = 'X')
+        set_copy('cf_d_forearm02_R', 'cf_j_hand_R', 0.33, axis = 'X')
+        set_copy('cf_d_wrist_R', 'cf_j_hand_R', 0.33, axis = 'X')
+        set_copy('cf_d_kneeF_R', 'cf_j_leg01_R', 0.5, axis = 'antiX', mix = 'add')
+        set_copy('cf_d_siri_R', 'cf_j_thigh00_R', 0.33)
+        set_copy('cf_d_thigh02_R', 'cf_j_thigh00_R', 0.25, axis='Y')
+        set_copy('cf_d_thigh03_R', 'cf_j_thigh00_R', 0.25, axis='Y')
+        set_copy('cf_d_leg02_R', 'cf_j_leg01_R', 0.33, axis='Y')
+        set_copy('cf_d_leg03_R', 'cf_j_leg01_R', 0.66, axis='Y')
 
-    #     #move the waist some if only one leg is rotated
-    #     set_copy('cf_s_waist02', 'cf_j_thigh00_L', 0.1, mix = 'add')
-    #     set_copy('cf_s_waist02', 'cf_j_thigh00_R', 0.1, mix = 'add')
-    #     #set_copy('cf_s_waist02', 'cf_j_thigh00_R', 0.1, mix = 'add')
-    #     #set_copy('cf_s_waist02', 'cf_j_thigh00_L', 0.1, mix = 'add')
+        #move the waist some if only one leg is rotated
+        set_copy('cf_s_waist02', 'cf_j_thigh00_L', 0.1, mix = 'add')
+        set_copy('cf_s_waist02', 'cf_j_thigh00_R', 0.1, mix = 'add')
+        #set_copy('cf_s_waist02', 'cf_j_thigh00_R', 0.1, mix = 'add')
+        #set_copy('cf_s_waist02', 'cf_j_thigh00_L', 0.1, mix = 'add')
 
-    #     set_copy('cf_s_waist02', 'cf_j_waist02', 0.5, axis = 'antiX')
+        set_copy('cf_s_waist02', 'cf_j_waist02', 0.5, axis = 'antiX')
 
-    #     #this rotation helps when doing a split
-    #     set_copy('cf_s_leg_L', 'cf_j_thigh00_L', .9, axis = 'Z', mix = 'add')
-    #     set_copy('cf_s_leg_R', 'cf_j_thigh00_R', .9, axis = 'Z', mix = 'add')
+        #this rotation helps when doing a split
+        set_copy('cf_s_leg_L', 'cf_j_thigh00_L', .9, axis = 'Z', mix = 'add')
+        set_copy('cf_s_leg_R', 'cf_j_thigh00_R', .9, axis = 'Z', mix = 'add')
 
-    #     #generic function for creating a driver
-    #     def setDriver (bone, drivertype, drivertypeselect, drivertarget, drivertt, drivermult, expresstype = 'move'):
+        #generic function for creating a driver
+        def setDriver (bone, drivertype, drivertypeselect, drivertarget, drivertt, drivermult, expresstype = 'move'):
 
-    #         #add driver to first component
-    #         #drivertype is the kind of driver you want to be applied to the bone and can be location/rotation
-    #         #drivertypeselect is the component of the bone you want the driver to be applied to
-    #         # for location it's (0 is x component, y is 1, z is 2)
-    #         # for rotation it's (0 is w, 1 is x, etc)
-    #         # for scale it's (0 is x, 1 is y, 2 is z)
-    #         driver = armature.pose.bones[bone].driver_add(drivertype, drivertypeselect)
+            #add driver to first component
+            #drivertype is the kind of driver you want to be applied to the bone and can be location/rotation
+            #drivertypeselect is the component of the bone you want the driver to be applied to
+            # for location it's (0 is x component, y is 1, z is 2)
+            # for rotation it's (0 is w, 1 is x, etc)
+            # for scale it's (0 is x, 1 is y, 2 is z)
+            driver = armature.pose.bones[bone].driver_add(drivertype, drivertypeselect)
 
-    #         #add driver variable
-    #         vari = driver.driver.variables.new()
-    #         vari.name = 'var'
-    #         vari.type = 'TRANSFORMS'
+            #add driver variable
+            vari = driver.driver.variables.new()
+            vari.name = 'var'
+            vari.type = 'TRANSFORMS'
 
-    #         #set the target and subtarget
-    #         target = vari.targets[0]
-    #         target.id = armature
-    #         target.bone_target = armature.pose.bones[drivertarget].name
+            #set the target and subtarget
+            target = vari.targets[0]
+            target.id = armature
+            target.bone_target = armature.pose.bones[drivertarget].name
 
-    #         #set the transforms for the target. this can be rotation or location 
-    #         target.transform_type = drivertt
+            #set the transforms for the target. this can be rotation or location 
+            target.transform_type = drivertt
 
-    #         #set the transform space. can be world space too
-    #         target.transform_space = 'LOCAL_SPACE'
-    #         target.rotation_mode = 'QUATERNION' if expresstype in ['scale', 'quat'] else 'AUTO'
+            #set the transform space. can be world space too
+            target.transform_space = 'LOCAL_SPACE'
+            target.rotation_mode = 'QUATERNION' if expresstype in ['scale', 'quat'] else 'AUTO'
 
-    #         #use the distance to the target bone's parent to make results consistent for different sized bones
-    #         targetbonelength = str(round((armature.pose.bones[drivertarget].head - armature.pose.bones[drivertarget].parent.head).length,3))
+            #use the distance to the target bone's parent to make results consistent for different sized bones
+            targetbonelength = str(round((armature.pose.bones[drivertarget].head - armature.pose.bones[drivertarget].parent.head).length,3))
             
-    #         #driver expression is the rotation value of the target bone multiplied by a percentage of the driver target bone's length
-    #         if expresstype in ['move', 'quat']:
-    #             driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult 
+            #driver expression is the rotation value of the target bone multiplied by a percentage of the driver target bone's length
+            if expresstype in ['move', 'quat']:
+                driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult 
             
-    #         #move but only during positive rotations
-    #         elif expresstype == 'movePos':
-    #             driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult + ' if ' + vari.name + ' > 0 else 0'
+            #move but only during positive rotations
+            elif expresstype == 'movePos':
+                driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult + ' if ' + vari.name + ' > 0 else 0'
             
-    #         #move but only during negative rotations
-    #         elif expresstype == 'moveNeg':
-    #             driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult + ' if ' + vari.name + ' < 0 else 0'
+            #move but only during negative rotations
+            elif expresstype == 'moveNeg':
+                driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult + ' if ' + vari.name + ' < 0 else 0'
             
-    #         #move but the ABS value
-    #         elif expresstype == 'moveABS':    
-    #             driver.driver.expression = 'abs(' + vari.name + '*' + targetbonelength + '*' + drivermult +')'
+            #move but the ABS value
+            elif expresstype == 'moveABS':    
+                driver.driver.expression = 'abs(' + vari.name + '*' + targetbonelength + '*' + drivermult +')'
 
-    #         #move but the negative ABS value
-    #         elif expresstype == 'moveABSNeg':
-    #             driver.driver.expression = '-abs(' + vari.name + '*' + targetbonelength + '*' + drivermult +')'
+            #move but the negative ABS value
+            elif expresstype == 'moveABSNeg':
+                driver.driver.expression = '-abs(' + vari.name + '*' + targetbonelength + '*' + drivermult +')'
             
-    #         #move but exponentially
-    #         elif expresstype == 'moveexp':
-    #             driver.driver.expression = vari.name + '*' + vari.name + '*' + targetbonelength + '*' + drivermult
+            #move but exponentially
+            elif expresstype == 'moveexp':
+                driver.driver.expression = vari.name + '*' + vari.name + '*' + targetbonelength + '*' + drivermult
             
-    #         elif expresstype == 'scale':
-    #             driver.driver.expression = '1 + ' + vari.name + '*' + targetbonelength + '*' + drivermult
+            elif expresstype == 'scale':
+                driver.driver.expression = '1 + ' + vari.name + '*' + targetbonelength + '*' + drivermult
             
-    #         elif expresstype == 'rotation':
-    #             driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult
+            elif expresstype == 'rotation':
+                driver.driver.expression = vari.name + '*' + targetbonelength + '*' + drivermult
 
-    #     #Set the remaining joint correction drivers
-    #     #set knee joint corrections. These go in toward the body and down toward the foot at an exponential rate
-    #     setDriver('cf_s_kneeB_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '-0.2', expresstype = 'moveexp')
-    #     setDriver('cf_s_kneeB_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.08')
+        #Set the remaining joint correction drivers
+        #set knee joint corrections. These go in toward the body and down toward the foot at an exponential rate
+        setDriver('cf_s_kneeB_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '-0.2', expresstype = 'moveexp')
+        setDriver('cf_s_kneeB_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.08')
 
-    #     setDriver('cf_s_kneeB_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '-0.2', expresstype = 'moveexp')
-    #     setDriver('cf_s_kneeB_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.08')
+        setDriver('cf_s_kneeB_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '-0.2', expresstype = 'moveexp')
+        setDriver('cf_s_kneeB_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.08')
 
-    #     #knee tip corrections go up toward the waist and in toward the body, also rotate a bit
-    #     setDriver('cf_d_kneeF_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.02')
-    #     setDriver('cf_d_kneeF_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.04')
+        #knee tip corrections go up toward the waist and in toward the body, also rotate a bit
+        setDriver('cf_d_kneeF_R', 'location', 1, 'cf_j_leg01_R', 'ROT_X',  '0.02')
+        setDriver('cf_d_kneeF_R', 'location', 2, 'cf_j_leg01_R', 'ROT_X',  '-0.04')
 
-    #     setDriver('cf_d_kneeF_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '0.02')
-    #     setDriver('cf_d_kneeF_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.04')
+        setDriver('cf_d_kneeF_L', 'location', 1, 'cf_j_leg01_L', 'ROT_X',  '0.02')
+        setDriver('cf_d_kneeF_L', 'location', 2, 'cf_j_leg01_L', 'ROT_X',  '-0.04')
 
-    #     #butt corrections go slightly up to the spine and in to the waist 
-    #     setDriver('cf_d_siri_R', 'location', 1, 'cf_j_thigh00_R', 'ROT_X',  '0.02')
-    #     setDriver('cf_d_siri_R', 'location', 2, 'cf_j_thigh00_R',  'ROT_X',  '0.02')
+        #butt corrections go slightly up to the spine and in to the waist 
+        setDriver('cf_d_siri_R', 'location', 1, 'cf_j_thigh00_R', 'ROT_X',  '0.02')
+        setDriver('cf_d_siri_R', 'location', 2, 'cf_j_thigh00_R',  'ROT_X',  '0.02')
 
-    #     setDriver('cf_d_siri_L', 'location', 1, 'cf_j_thigh00_L', 'ROT_X',  '0.02')
-    #     setDriver('cf_d_siri_L', 'location', 2, 'cf_j_thigh00_L',  'ROT_X',  '0.02')
+        setDriver('cf_d_siri_L', 'location', 1, 'cf_j_thigh00_L', 'ROT_X',  '0.02')
+        setDriver('cf_d_siri_L', 'location', 2, 'cf_j_thigh00_L',  'ROT_X',  '0.02')
         
-    #     #hand corrections go up to the head and in towards the elbow
-    #     setDriver('cf_d_hand_R', 'location', 0, 'cf_j_hand_R', 'ROT_Z',  '-0.4', expresstype = 'moveNeg')
-    #     setDriver('cf_d_hand_R', 'location', 1, 'cf_j_hand_R', 'ROT_Z', '-0.4', expresstype = 'moveNeg')
+        #hand corrections go up to the head and in towards the elbow
+        setDriver('cf_d_hand_R', 'location', 0, 'cf_j_hand_R', 'ROT_Z',  '-0.4', expresstype = 'moveNeg')
+        setDriver('cf_d_hand_R', 'location', 1, 'cf_j_hand_R', 'ROT_Z', '-0.4', expresstype = 'moveNeg')
 
-    #     setDriver('cf_d_hand_L', 'location', 0, 'cf_j_hand_L', 'ROT_Z', '-0.4', expresstype = 'movePos')
-    #     setDriver('cf_d_hand_L', 'location', 1, 'cf_j_hand_L', 'ROT_Z', '0.4', expresstype = 'movePos')
+        setDriver('cf_d_hand_L', 'location', 0, 'cf_j_hand_L', 'ROT_Z', '-0.4', expresstype = 'movePos')
+        setDriver('cf_d_hand_L', 'location', 1, 'cf_j_hand_L', 'ROT_Z', '0.4', expresstype = 'movePos')
 
-    #     #elboback goes out to the chest and into the shoulder
-    #     #elbo goes does the opposite
-    #     setDriver('cf_s_elboback_R', 'location', 0, 'cf_j_forearm01_R', 'ROT_X',  '-0.7')
-    #     setDriver('cf_s_elboback_R', 'location', 2, 'cf_j_forearm01_R', 'ROT_X',  '0.6')
-    #     setDriver('cf_s_elbo_R', 'location', 0, 'cf_j_forearm01_R', 'ROT_X',  '0.025')
-    #     setDriver('cf_s_elbo_R', 'location', 2, 'cf_j_forearm01_R', 'ROT_X',  '0.025')
+        #elboback goes out to the chest and into the shoulder
+        #elbo goes does the opposite
+        setDriver('cf_s_elboback_R', 'location', 0, 'cf_j_forearm01_R', 'ROT_X',  '-0.7')
+        setDriver('cf_s_elboback_R', 'location', 2, 'cf_j_forearm01_R', 'ROT_X',  '0.6')
+        setDriver('cf_s_elbo_R', 'location', 0, 'cf_j_forearm01_R', 'ROT_X',  '0.025')
+        setDriver('cf_s_elbo_R', 'location', 2, 'cf_j_forearm01_R', 'ROT_X',  '0.025')
 
-    #     setDriver('cf_s_elboback_L', 'location', 0, 'cf_j_forearm01_L', 'ROT_X',  '-0.7')
-    #     setDriver('cf_s_elboback_L', 'location', 2, 'cf_j_forearm01_L', 'ROT_X',  '-0.6')
-    #     setDriver('cf_s_elbo_L', 'location', 0, 'cf_j_forearm01_L', 'ROT_X',  '0.025')
-    #     setDriver('cf_s_elbo_L', 'location', 2, 'cf_j_forearm01_L', 'ROT_X',  '-0.025')
+        setDriver('cf_s_elboback_L', 'location', 0, 'cf_j_forearm01_L', 'ROT_X',  '-0.7')
+        setDriver('cf_s_elboback_L', 'location', 2, 'cf_j_forearm01_L', 'ROT_X',  '-0.6')
+        setDriver('cf_s_elbo_L', 'location', 0, 'cf_j_forearm01_L', 'ROT_X',  '0.025')
+        setDriver('cf_s_elbo_L', 'location', 2, 'cf_j_forearm01_L', 'ROT_X',  '-0.025')
 
-    #     #shoulder bones have a few corrections as well
-    #     setDriver('cf_d_shoulder02_R', 'location', 1, 'cf_j_arm00_R', 'ROT_Z',  '-0.1', expresstype = 'moveNeg')
-    #     setDriver('cf_d_shoulder02_R', 'location', 0, 'cf_j_arm00_R', 'ROT_Y',  '0.1', expresstype = 'moveABSNeg')
-    #     setDriver('cf_d_shoulder02_R', 'location', 2, 'cf_j_arm00_R', 'ROT_Y',  '-0.1')
+        #shoulder bones have a few corrections as well
+        setDriver('cf_d_shoulder02_R', 'location', 1, 'cf_j_arm00_R', 'ROT_Z',  '-0.1', expresstype = 'moveNeg')
+        setDriver('cf_d_shoulder02_R', 'location', 0, 'cf_j_arm00_R', 'ROT_Y',  '0.1', expresstype = 'moveABSNeg')
+        setDriver('cf_d_shoulder02_R', 'location', 2, 'cf_j_arm00_R', 'ROT_Y',  '-0.1')
 
-    #     setDriver('cf_d_shoulder02_L', 'location', 1, 'cf_j_arm00_L', 'ROT_Z',  '0.1', expresstype = 'movePos')
-    #     setDriver('cf_d_shoulder02_L', 'location', 0, 'cf_j_arm00_L', 'ROT_Y',  '-0.1', expresstype = 'moveABS')
-    #     setDriver('cf_d_shoulder02_L', 'location', 2, 'cf_j_arm00_L', 'ROT_Y',  '0.1')
+        setDriver('cf_d_shoulder02_L', 'location', 1, 'cf_j_arm00_L', 'ROT_Z',  '0.1', expresstype = 'movePos')
+        setDriver('cf_d_shoulder02_L', 'location', 0, 'cf_j_arm00_L', 'ROT_Y',  '-0.1', expresstype = 'moveABS')
+        setDriver('cf_d_shoulder02_L', 'location', 2, 'cf_j_arm00_L', 'ROT_Y',  '0.1')
 
-    #     #leg corrections go up to the head and slightly forwards/backwards
-    #     setDriver('cf_s_leg_R', 'location', 1, 'cf_j_thigh00_R', 'ROT_X',  '1', expresstype = 'moveexp')
-    #     setDriver('cf_s_leg_R', 'location', 2, 'cf_j_thigh00_R', 'ROT_X',  '-1.5')
+        #leg corrections go up to the head and slightly forwards/backwards
+        setDriver('cf_s_leg_R', 'location', 1, 'cf_j_thigh00_R', 'ROT_X',  '1', expresstype = 'moveexp')
+        setDriver('cf_s_leg_R', 'location', 2, 'cf_j_thigh00_R', 'ROT_X',  '-1.5')
 
-    #     setDriver('cf_s_leg_L', 'location', 1, 'cf_j_thigh00_L', 'ROT_X',  '1', expresstype = 'moveexp')
-    #     setDriver('cf_s_leg_L', 'location', 2, 'cf_j_thigh00_L', 'ROT_X',  '-1.5')
+        setDriver('cf_s_leg_L', 'location', 1, 'cf_j_thigh00_L', 'ROT_X',  '1', expresstype = 'moveexp')
+        setDriver('cf_s_leg_L', 'location', 2, 'cf_j_thigh00_L', 'ROT_X',  '-1.5')
 
-    #     #waist correction slightly moves out to chest when lower waist rotates
-    #     setDriver('cf_s_waist02', 'location', 2, 'cf_j_waist02', 'ROT_X',  '0.2', expresstype='moveABS')
+        #waist correction slightly moves out to chest when lower waist rotates
+        setDriver('cf_s_waist02', 'location', 2, 'cf_j_waist02', 'ROT_X',  '0.2', expresstype='moveABS')
 
     # def categorize_bones(self):
     #     '''Add some bones to bone groups to give them colors'''
