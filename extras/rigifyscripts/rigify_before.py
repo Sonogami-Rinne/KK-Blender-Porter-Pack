@@ -1795,10 +1795,10 @@ def main():
     for boneName in koikatsuCommons.eyesSecondaryLayerBoneNames:
         koikatsuCommons.assignSingleBoneLayer(metarig, boneName, koikatsuCommons.eyesLayerName)
     
-    #set the eye controller to be part of the torso layer
-    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.eyesHandleBoneName, koikatsuCommons.torsoLayerName)
-    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.leftEyeHandleBoneName, koikatsuCommons.torsoLayerName)
-    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightEyeHandleBoneName, koikatsuCommons.torsoLayerName)
+    #set the eye controller to be part of the Face layer
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.eyesHandleBoneName, koikatsuCommons.faceLayerName)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.leftEyeHandleBoneName, koikatsuCommons.faceLayerName)
+    koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightEyeHandleBoneName, koikatsuCommons.faceLayerName)
 
     #get rid of the head track target
     koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.headTrackTargetBoneName, koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix)
@@ -1819,15 +1819,33 @@ def main():
     koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightButtockHandleBoneName, koikatsuCommons.torsoLayerName + koikatsuCommons.fkLayerSuffix)
     koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.waistBoneName, koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix)
 
-    # #put the finger extra ik bones on the fingers detail layer
-    # for boneName in koikatsuCommons.fingersLayerBoneNames:
-    #     if '1_' in boneName:
-    #         koikatsuCommons.setExtraIKLayer(metarig, boneName, koikatsuCommons.fingersLayerName + koikatsuCommons.detailLayerSuffix)
+    face_bones = ['cf_J_CheekUp_s_L', 'cf_J_CheekUp_s_R', 'cf_J_CheekLow_s_L', 'cf_J_CheekLow_s_R', 
+                  'cf_J_Chin_s', 'cf_J_ChinTip_Base', 'cf_J_ChinLow', 'cf_J_MouthCavity', 'cf_J_MouthMove', 
+                  'cf_J_Mouth_L', 'cf_J_Mouth_R', 'cf_J_MouthLow', 'cf_J_Mouthup', 'cf_J_EarBase_ry_L', 
+                  'cf_J_EarLow_L', 'cf_J_EarUp_L', 'cf_J_EarBase_ry_R', 'cf_J_EarLow_R', 'cf_J_EarUp_R', 
+                  'cf_J_Eye_rz_L', 'cf_J_CheekUp2_L', 'cf_J_Eye01_s_L', 'cf_J_Eye02_s_L', 'cf_J_Eye03_s_L', 
+                  'cf_J_Eye04_s_L', 'cf_J_Eye05_s_L', 'cf_J_Eye06_s_L', 'cf_J_Eye07_s_L', 'cf_J_Eye08_s_L', 
+                  'cf_J_Eye_rz_R', 'cf_J_CheekUp2_R', 'cf_J_Eye01_s_R', 'cf_J_Eye02_s_R', 'cf_J_Eye03_s_R', 
+                  'cf_J_Eye04_s_R', 'cf_J_Eye05_s_R', 'cf_J_Eye06_s_R', 'cf_J_Eye07_s_R', 'cf_J_Eye08_s_R', 
+                  'cf_J_Mayu_L', 'cf_J_MayuMid_s_L', 'cf_J_MayuTip_s_L', 'cf_J_Mayu_R', 'cf_J_MayuMid_s_R', 
+                  'cf_J_MayuTip_s_R', 'cf_J_NoseBase', 'cf_J_Nose_tip', 'cf_J_NoseBridge_rx']
+
+    #face bones
+    for boneName in face_bones:
+        if bone := metarig.data.bones.get(boneName):
+            koikatsuCommons.assignSingleBoneLayer(metarig, bone.name, koikatsuCommons.faceLayerName)
+            koikatsuCommons.unlockAllPoseTransforms(metarig, bone.name)
+            bone.use_deform = True
+    
+    for bone in metarig.data.bones:
+        if bone.collections.get(koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix) or bone.collections.get(koikatsuCommons.nsfwLayerName):
+            koikatsuCommons.unlockAllPoseTransforms(metarig, bone.name)
+            bone.use_deform = True
 
     bpy.ops.object.mode_set(mode='EDIT')
     
     for bone in metarig.data.edit_bones:
-        if bone.name in defBoneNames:
+        if bone.name in defBoneNames or bone.collections.get(koikatsuCommons.nsfwLayerName):
             bone.use_deform = True
         else:
             bone.use_deform = False
@@ -1883,15 +1901,28 @@ def main():
     metarig.pose.bones[koikatsuCommons.rightLegBoneName].rigify_parameters.extra_toe_roll = True
 
     #add missing color groups
-    bpy.context.object.data.collections_all[koikatsuCommons.faceLayerName].rigify_color_set_name = "Tweak"
-    bpy.context.object.data.collections_all[koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix].rigify_color_set_name = "Root"
+    #Tweak = blue, root = purple, IK = red, FK = green, Extra = orange, special = yellow
     bpy.context.object.data.collections_all[koikatsuCommons.torsoLayerName].rigify_color_set_name = "Special"
     bpy.context.object.data.collections_all[koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix].rigify_color_set_name = "Tweak"
-    bpy.context.object.data.collections_all[koikatsuCommons.rightArmLayerName + koikatsuCommons.ikLayerSuffix].rigify_color_set_name = "FK"
-    bpy.context.object.data.collections_all[koikatsuCommons.rightLegLayerName + koikatsuCommons.ikLayerSuffix].rigify_color_set_name = "FK"
-    bpy.context.object.data.collections_all[koikatsuCommons.leftArmLayerName + koikatsuCommons.ikLayerSuffix].rigify_color_set_name = "FK"
-    bpy.context.object.data.collections_all[koikatsuCommons.leftLegLayerName + koikatsuCommons.ikLayerSuffix].rigify_color_set_name = "FK"
-    bpy.context.object.data.collections_all[koikatsuCommons.skirtLayerName].rigify_color_set_name = "FK"
+    bpy.context.object.data.collections_all[koikatsuCommons.rightArmLayerName + koikatsuCommons.ikLayerSuffix].rigify_color_set_name = "IK"
+    bpy.context.object.data.collections_all[koikatsuCommons.rightLegLayerName + koikatsuCommons.ikLayerSuffix].rigify_color_set_name = "IK"
+    bpy.context.object.data.collections_all[koikatsuCommons.leftArmLayerName + koikatsuCommons.ikLayerSuffix].rigify_color_set_name = "IK"
+    bpy.context.object.data.collections_all[koikatsuCommons.leftLegLayerName + koikatsuCommons.ikLayerSuffix].rigify_color_set_name = "IK"
+    bpy.context.object.data.collections_all[koikatsuCommons.rightArmLayerName + koikatsuCommons.fkLayerSuffix].rigify_color_set_name = "FK"
+    bpy.context.object.data.collections_all[koikatsuCommons.rightLegLayerName + koikatsuCommons.fkLayerSuffix].rigify_color_set_name = "FK"
+    bpy.context.object.data.collections_all[koikatsuCommons.leftArmLayerName +  koikatsuCommons.fkLayerSuffix].rigify_color_set_name = "FK"
+    bpy.context.object.data.collections_all[koikatsuCommons.leftLegLayerName +  koikatsuCommons.fkLayerSuffix].rigify_color_set_name = "FK"
+    bpy.context.object.data.collections_all[koikatsuCommons.fingersLayerName].rigify_color_set_name                                  = "Special"
+    bpy.context.object.data.collections_all[koikatsuCommons.fingersLayerName + koikatsuCommons.detailLayerSuffix].rigify_color_set_name = "Special"
+    bpy.context.object.data.collections_all[koikatsuCommons.nsfwLayerName].rigify_color_set_name = "Tweak"
+    bpy.context.object.data.collections_all[koikatsuCommons.skirtLayerName + koikatsuCommons.detailLayerSuffix].rigify_color_set_name = "FK"
+    bpy.context.object.data.collections_all[koikatsuCommons.skirtLayerName].rigify_color_set_name = "Special"
+    bpy.context.object.data.collections_all[koikatsuCommons.faceLayerName].rigify_color_set_name = "Special"
+    bpy.context.object.data.collections_all[koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix].rigify_color_set_name = "Tweak"
+    bpy.context.object.data.collections_all[koikatsuCommons.eyesLayerName].rigify_color_set_name = "Extra"
+    bpy.context.object.data.collections_all[koikatsuCommons.hairLayerName].rigify_color_set_name = "Special"
+    bpy.context.object.data.collections_all[koikatsuCommons.hairLayerName + koikatsuCommons.mchLayerSuffix].rigify_color_set_name = "Tweak"
+    bpy.context.object.data.collections_all[koikatsuCommons.hairLayerName + koikatsuCommons.detailLayerSuffix].rigify_color_set_name = "FK"
 
 class rigify_before(bpy.types.Operator):
     bl_idname = "kkbp.rigbefore"

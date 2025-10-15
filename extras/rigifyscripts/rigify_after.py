@@ -35,6 +35,8 @@ def main():
     if metarig:
         metarig.name = 'Metarig ' + metarig['name']
         generatedRig.name = 'Rig ' + metarig['name']
+        generatedRig['rig'] = True
+        generatedRig['name'] = metarig['name']
 
         metarig.hide_set(True)
         for object in bpy.data.objects:
@@ -127,12 +129,26 @@ def main():
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rightLittleFingerBone2Name, 1.1)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.leftLittleFingerBone3Name, 1.1)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rightLittleFingerBone3Name, 1.1)
-    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rootBoneName, 0.35)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rootBoneName, 0.25)
     
-    for bone in generatedRig.pose.bones:
-        if generatedRig.data.bones[bone.name].collections.get(str(koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix))):
+    for bone in generatedRig.data.bones:
+        if (bone.collections.get(koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName)) or 
+        bone.collections.get(koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix))):
+            if (bone.name in [koikatsuCommons.eyesHandleBoneName, koikatsuCommons.leftEyeHandleBoneName, koikatsuCommons.rightEyeHandleBoneName] or 
+            bone.name.startswith('cf_J_Eye0') or bone.name.startswith('cf_J_Mouth') or 
+            bone.name.startswith('cf_J_Mayu')):
+                continue
             koikatsuCommons.setBoneCustomShapeScale(generatedRig, bone.name, 0.15)
         
+            if bone.name.startswith('cf_J_Eye0') or bone.name.startswith('cf_J_Mouth') or bone.name.startswith('cf_J_Mayu'):
+                bone.custom_shape_euler_rotation[0] = 1.5708
+    
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, 'cf_J_Mayumoto_R', 0.15)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, 'cf_J_Mayumoto_L', 0.15)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, 'cf_J_Mayu_ty', 0.15)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, 'cf_J_MouthBase_ty', 0.15)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, 'cf_j_kokan', 0.2)
+
     headBone = generatedRig.pose.bones[koikatsuCommons.originalBonePrefix + koikatsuCommons.headBoneName]
     koikatsuCommons.changeConstraintIndex(generatedRig, headBone.name, koikatsuCommons.transformationConstraintBaseName + koikatsuCommons.headConstraintSuffix + koikatsuCommons.rotationConstraintSuffix, len(headBone.constraints) - 1)
     koikatsuCommons.changeConstraintIndex(generatedRig, headBone.name, koikatsuCommons.limitRotationConstraintBaseName + koikatsuCommons.headConstraintSuffix, len(headBone.constraints) - 1)
@@ -184,81 +200,66 @@ def main():
     bpy.ops.object.mode_set(mode='EDIT')
 
     for bone in generatedRig.data.edit_bones:
-        if generatedRig.data.bones[bone.name].collections.get(str(koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.junkLayerName))):
+        if bone.collections.get(koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.junkLayerName)):
             koikatsuCommons.deleteBone(generatedRig, bone.name)
             continue
-        if generatedRig.data.bones[bone.name].collections.get(str(koikatsuCommons.defLayerIndex)):
+        if bone.collections.get(koikatsuCommons.defLayerIndex) or bone.collections.get(koikatsuCommons.nsfwLayerName) or bone.name == 'cf_s_waist02':
             bone.use_deform = True
-            
+
+    #face bones deform
+    for bone in generatedRig.data.edit_bones:
+        if bone.collections.get(koikatsuCommons.faceLayerName):
+            bone.use_deform = True
+    
+    #face bones deform
+    for bone in metarig.data.bones:
+        if bone.collections.get(koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix) or bone.collections.get(koikatsuCommons.nsfwLayerName):
+            koikatsuCommons.unlockAllPoseTransforms(metarig, bone.name)
+            bone.use_deform = True
+
     generatedRig.data.edit_bones[koikatsuCommons.eyesTrackTargetParentBoneName].parent = None
     generatedRig.data.edit_bones[koikatsuCommons.headTrackTargetParentBoneName].parent = None
     
     bpy.ops.object.mode_set(mode='OBJECT')
         
-    #move some bones to the correct layer at the end because I don't feel like figuring out what went wrong
-    theme_dict = {
-        'purple':[1.000000, 0.266356, 0.955974],
-        'red':(0.8, 0, 0),
-        'yellow':(0.956863, 0.788235, 0.047059),
-        'blue':(0.005605, 0.104617, 0.947307),
-        'green':(0.026241, 0.693872, 0.004025),
-        'orange':(0.968628, 0.250980, 0.094118)
-    }
-    for bone in ['cf_j_tang_02', 'cf_j_tang_03', 'cf_j_tang_04', 'cf_j_tang_05', 'cf_j_tang_02.001']:
-        if generatedRig.data.bones.get(bone):
-            generatedRig.data.bones[bone].color.custom.normal = theme_dict['green']
-            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['green']
-
-    #Torso detail
-    for bone in ['tweak_Neck', 'Upper Chest_fk', 'tweak_Upper Chest', 'Chest_fk', 'tweak_Upper Chest', 'Chest_fk','tweak_Chest','Spine_fk','tweak_Spine','Hips_fk','tweak_Hips']:
-        if generatedRig.data.bones.get(bone):
-            generatedRig.data.bones[bone].color.custom.normal = theme_dict['blue']
-            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['blue']
-
-    for bone in ['Left wrist_fk', 'Left elbow_fk', 'Left arm_fk', 'Right arm_fk', 'Right elbow_fk', 'Right wrist_fk']:
-        if generatedRig.data.bones.get(bone):
-            generatedRig.data.bones[bone].color.custom.normal = theme_dict['green']
-            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['green']
-
-    for bone in ['Left arm_tweak', 'Left arm_tweak.001', 'Left arm_tweak.002', 'Left elbow_tweak', 'Left elbow_tweak.001', 'Left elbow_tweak.002', 'Left wrist_tweak',
-                 'Right arm_tweak', 'Right arm_tweak.001', 'Right arm_tweak.002', 'Right elbow_tweak', 'Right elbow_tweak.001', 'Right elbow_tweak.002', 'Right wrist_tweak']:
-        if generatedRig.data.bones.get(bone):
-            generatedRig.data.bones[bone].color.custom.normal = theme_dict['blue']
-            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['blue']
-
-    for bone in ['Thumb0_L', 'Thumb1_L', 'Thumb2_L', 'Thumb0_L.001', 'IndexFinger1_L', 'IndexFinger2_L', 'IndexFinger3_L', 'IndexFinger1_L.001', 'MiddleFinger1_L', 'MiddleFinger2_L', 'MiddleFinger3_L', 'MiddleFinger1_L.001', 'RingFinger1_L', 'RingFinger2_L', 'RingFinger3_L', 'RingFinger1_L.001', 'LittleFinger1_L', 'LittleFinger2_L', 'LittleFinger3_L', 'LittleFinger1_L.001', 'Thumb0_R', 'Thumb1_R', 'Thumb2_R', 'Thumb0_R.001', 'IndexFinger1_R', 'IndexFinger2_R', 'IndexFinger3_R', 'IndexFinger1_R.001', 'MiddleFinger1_R', 'MiddleFinger2_R', 'MiddleFinger3_R', 'MiddleFinger1_R.001', 'RingFinger1_R', 'RingFinger2_R', 'RingFinger3_R', 'RingFinger1_R.001', 'LittleFinger1_R', 'LittleFinger2_R', 'LittleFinger3_R', 'LittleFinger1_R.001']:
-        if generatedRig.data.bones.get(bone):
-            generatedRig.data.bones[bone].color.custom.normal = theme_dict['green']
-            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['green']
-
-    for bone in ['Left leg_fk', 'Left knee_fk', 'Left ankle_fk', 'Left toe_fk', 'Right leg_fk', 'Right knee_fk', 'Right ankle_fk', 'Right toe_fk']:
-        if generatedRig.data.bones.get(bone):
-            generatedRig.data.bones[bone].color.custom.normal = theme_dict['green']
-            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['green']
-
-    for bone in ['Left leg_tweak', 'Left leg_tweak.001', 'Left leg_tweak.002', 'Left knee_tweak', 'Left knee_tweak.001', 'Left knee_tweak.002', 'Left ankle_tweak', 'Right leg_tweak', 'Right leg_tweak.001', 'Right leg_tweak.002', 'Right knee_tweak', 'Right knee_tweak.001', 'Right knee_tweak.002', 'Right ankle_tweak']:
-        if generatedRig.data.bones.get(bone):
-            generatedRig.data.bones[bone].color.custom.normal = theme_dict['blue']
-            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['blue']
-
-    for bone in ['cf_j_sk_00_00_ik', 'cf_j_sk_01_00_ik', 'cf_j_sk_02_00_ik', 'cf_j_sk_03_00_ik', 'cf_j_sk_04_00_ik', 'cf_j_sk_05_00_ik', 'cf_j_sk_06_00_ik', 'cf_j_sk_07_00_ik', 'cf_j_sk_00_00_master', 'cf_j_sk_01_00_master', 'cf_j_sk_02_00_master', 'cf_j_sk_03_00_master', 'cf_j_sk_04_00_master', 'cf_j_sk_05_00_master', 'cf_j_sk_06_00_master', 'cf_j_sk_07_00_master']:
-        if generatedRig.data.bones.get(bone):
-            generatedRig.data.bones[bone].color.custom.normal = theme_dict['red']
-            generatedRig.pose.bones[bone].color.custom.normal = theme_dict['red']
-
     bpy.context.object.pose.bones["root"].color.palette = 'CUSTOM'
-    generatedRig.data.bones['root'].color.custom.normal = theme_dict['yellow']
-    generatedRig.pose.bones['root'].color.custom.normal = theme_dict['yellow']
+    #needs to be done for data and pose
+    generatedRig.data.bones['root'].color.custom.normal = (0.956863, 0.788235, 0.047059)
     generatedRig.data.bones['root'].color.custom.select = (0.313989, 0.783538, 1.000000)
-    generatedRig.pose.bones['root'].color.custom.select = (0.313989, 0.783538, 1.000000)
     generatedRig.data.bones['root'].color.custom.active = (0.552011, 1.000000, 1.000000)
+
     generatedRig.pose.bones['root'].color.custom.active = (0.552011, 1.000000, 1.000000)
+    generatedRig.pose.bones['root'].color.custom.normal = (0.956863, 0.788235, 0.047059)
+    generatedRig.pose.bones['root'].color.custom.select = (0.313989, 0.783538, 1.000000)
 
     #set layer visibility
     for collection in generatedRig.data.collections_all:
         collection.is_visible = False
     for layer in ['Torso', 'Arm.L IK', 'Arm.R IK', 'Leg.L IK', 'Leg.R IK', 'Root']:
         generatedRig.data.collections_all[layer].is_visible = True
+
+    #TODO: doesn't work
+    #Take the IDs from all org bones and copy them over to the generated / helper bones
+    for bone in generatedRig.data.bones:
+        if bone.get('id') and bone.name.startswith('ORG-'):
+            bone_base_name = bone.name[4:]  # Remove 'ORG-' prefix
+            for bone_name in [
+                bone_base_name,
+                'DEF-' + bone_base_name,
+                bone_base_name + '_ik', 
+                bone_base_name + '_ik.parent', 
+                bone_base_name + '_master', 
+                'MCH-' + bone_base_name,
+                'MCH-' + bone_base_name + '_drv',
+                ]:
+                if generatedRig.data.bones.get(bone_name):
+                    generatedRig.data.bones[bone_name]['id'] = bone['id']
+                    #also add the id to the .001 tail bone that appears sometimes
+                    if 'MCH-' in bone_name and '_drv' in bone_name:
+                        if first_child := generatedRig.data.bones[bone_name].children:
+                            if second_child := first_child[0].children:
+                                second_child[0]['id'] = bone['id']
+
 
 class rigify_after(bpy.types.Operator):
     bl_idname = "kkbp.rigafter"

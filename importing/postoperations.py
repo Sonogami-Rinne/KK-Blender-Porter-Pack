@@ -32,6 +32,7 @@ class post_operations(bpy.types.Operator):
             self.apply_sfw()
             self.separate_meshes()
             
+            c.switch(c.get_armature(), 'object')
             c.clean_orphaned_data()
             c.set_viewport_shading('SOLID')
 
@@ -319,48 +320,14 @@ class post_operations(bpy.types.Operator):
         #cleanup the generated rigify rig
         bpy.ops.kkbp.rigafter('INVOKE_DEFAULT')
         #make sure the new bones on the generated rig retain the KKBP outfit id entry
-        rig = bpy.context.active_object
-        rig['rig'] = True
-        rig['name'] = c.get_name()
-        rig.name = 'Rig ' + c.get_name()
-
-        #Take the IDs from all org bones and copy them over to the generated / helper bones
-        for bone in rig.data.bones:
-            if bone.get('id') and bone.name.startswith('ORG-'):
-                bone_base_name = bone.name[4:]  # Remove 'ORG-' prefix
-                for bone_name in [
-                    bone_base_name,
-                    'DEF-' + bone_base_name,
-                    bone_base_name + '_ik', 
-                    bone_base_name + '_ik.parent', 
-                    bone_base_name + '_master', 
-                    'MCH-' + bone_base_name,
-                    'MCH-' + bone_base_name + '_drv',
-                    ]:
-                    if rig.data.bones.get(bone_name):
-                        rig.data.bones[bone_name]['id'] = bone['id']
-                        #also add the id to the .001 tail bone that appears sometimes
-                        if 'MCH-' in bone_name and '_drv' in bone_name:
-                            if first_child := rig.data.bones[bone_name].children:
-                                if second_child := first_child[0].children:
-                                    second_child[0]['id'] = bone['id']
-
-        armature.hide_set(True)
-        bpy.ops.object.select_all(action='DESELECT')
+        rig = c.get_rig()
 
         #make sure everything is deselected in edit mode for the body
-        body = c.get_body()
-        bpy.ops.object.select_all(action='DESELECT')
-        body.select_set(True)
-        bpy.context.view_layer.objects.active=body
-        bpy.ops.object.mode_set(mode = 'EDIT')
-        bpy.ops.mesh.select_all(action='DESELECT')
-        bpy.ops.object.mode_set(mode = 'OBJECT')
-        bpy.ops.object.select_all(action='DESELECT')
+        c.switch(c.get_body(), 'edit')
+        c.switch(c.get_body(), 'object')
 
-        rig.select_set(True)
-        bpy.context.view_layer.objects.active=rig
-        rig.show_in_front = True
+        #then finally switch to the rig as the last selected object
+        c.switch(rig, 'object')
         bpy.context.scene.tool_settings.transform_pivot_point = 'INDIVIDUAL_ORIGINS'
         bpy.context.tool_settings.mesh_select_mode = (False, False, True) #enable face select in edit mode
         return {'FINISHED'}

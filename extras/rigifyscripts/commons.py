@@ -1258,6 +1258,18 @@ def lockAllPoseTransforms(rig, boneName):
     rig.pose.bones[boneName].lock_scale[1] = True
     rig.pose.bones[boneName].lock_scale[2] = True
 
+def unlockAllPoseTransforms(rig, boneName):
+    rig.pose.bones[boneName].lock_location[0] = False
+    rig.pose.bones[boneName].lock_location[1] = False
+    rig.pose.bones[boneName].lock_location[2] = False
+    rig.pose.bones[boneName].lock_rotation[0] = False
+    rig.pose.bones[boneName].lock_rotation[1] = False
+    rig.pose.bones[boneName].lock_rotation[2] = False
+    rig.pose.bones[boneName].lock_rotation_w =  False
+    rig.pose.bones[boneName].lock_scale[0] =    False
+    rig.pose.bones[boneName].lock_scale[1] =    False
+    rig.pose.bones[boneName].lock_scale[2] =    False
+
 bonesWithDrivers = [
 waistJointCorrectionBoneName,
 leftButtockJointCorrectionBoneName, 
@@ -1283,9 +1295,7 @@ driverTargets = [leftKneeBoneName, rightKneeBoneName, leftLegBoneName, rightLegB
 targetsToChange = [leftArmBoneName, rightArmBoneName, leftElbowBoneName, rightElbowBoneName, leftLegBoneName, rightLegBoneName, leftKneeBoneName, rightKneeBoneName]
 
 def setBoneCustomShapeScale(rig, boneName, scale):
-    if bpy.app.version[0] < 3:
-        rig.pose.bones[boneName].custom_shape_scale = scale
-    else:
+    if rig.pose.bones.get(boneName):
         rig.pose.bones[boneName].custom_shape_scale_xyz = [scale, scale, scale]
 
 japHalfToFullTuples = (
