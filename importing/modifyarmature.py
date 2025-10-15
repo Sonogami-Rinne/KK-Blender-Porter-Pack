@@ -520,19 +520,19 @@ class modify_armature(bpy.types.Operator):
             self.set_armature_layer(bone.name, layer_name = 'Deform bones')
         #extract core bones
         for bone in self.core_bones:
-            self.set_armature_layer(bone, layer_name = 'Core')
+            self.set_armature_layer(bone, layer_name = 'Torso')
         #extract left arm bones 
         for bone in self.arm_bones_left:
-            self.set_armature_layer(bone, layer_name = 'Left arm FK')
+            self.set_armature_layer(bone, layer_name = 'Arm.L FK')
         #xtract left leg bones
         for bone in self.leg_bones_left:
-            self.set_armature_layer(bone, layer_name = 'Left leg FK')
+            self.set_armature_layer(bone, layer_name = 'Leg.L FK')
         #extract right arm bones
         for bone in self.arm_bones_right:
-            self.set_armature_layer(bone, layer_name = 'Right arm FK')
+            self.set_armature_layer(bone, layer_name = 'Arm.R FK')
         #extract right leg bones
         for bone in self.leg_bones_right:
-            self.set_armature_layer(bone, layer_name = 'Right leg FK')
+            self.set_armature_layer(bone, layer_name = 'Leg.R FK')
         #extract fingers
         for bone in self.finger_bones:
             self.set_armature_layer(bone, layer_name = 'Fingers')
@@ -544,7 +544,7 @@ class modify_armature(bpy.types.Operator):
             self.set_armature_layer(bone, layer_name = 'Face')
         #extract face bone mch
         for bone in self.face_bones_mch:
-            self.set_armature_layer(bone, layer_name = 'Face MCH')
+            self.set_armature_layer(bone, layer_name = 'Face (MCH)')
         #extract rigged tongue bones
         for bone in self.rigged_tongue_bones:
             self.set_armature_layer(bone, layer_name = 'Rigged tongue')
@@ -761,7 +761,7 @@ class modify_armature(bpy.types.Operator):
         armature.pose.bones['Eye Controller'].lock_location[1] = True
         #Hide the original Eyesx bone
         armature.data.bones['Eyesx'].hide = True
-        self.set_armature_layer('Eye Controller', 'Core')
+        self.set_armature_layer('Eye Controller', 'Torso')
         c.switch(armature, 'object')
 
         #Create a UV warp modifier for the eyes. Controlled by the Eye controller bone

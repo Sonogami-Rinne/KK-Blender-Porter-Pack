@@ -312,10 +312,6 @@ class post_operations(bpy.types.Operator):
 
         #run a script to prepare the armature for rigify
         bpy.ops.kkbp.rigbefore('INVOKE_DEFAULT')
-        #remove the left ankle and right ankle's super copy prop
-        if bpy.app.version[0] != 3:
-            armature.pose.bones['Left ankle'].rigify_type = ""
-            armature.pose.bones['Right ankle'].rigify_type = ""
         
         #generate the rigify rig
         bpy.ops.pose.rigify_generate()

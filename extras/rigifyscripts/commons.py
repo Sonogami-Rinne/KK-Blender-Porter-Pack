@@ -913,7 +913,7 @@ leftLittleFingerPalmBoneName, rightLittleFingerPalmBoneName, leftLittleFingerBon
 rightLittleFingerBone2Name, leftLittleFingerBone3Name, rightLittleFingerBone3Name]
 
 originalIkLayerIndex = 0
-originalFkLayerIndex = 'Core'
+originalFkLayerIndex = 'Torso'
 originalPrimaryJointCorrectionLayerIndex = 2
 originalSecondaryJointCorrectionLayerIndex = 3
 originalBetterPenetrationLayerIndex = 4
@@ -923,7 +923,7 @@ originalMchLayerIndex = 'Junk'
 originalPhysicsLayerIndex = 11
 originalExtraLayerIndex = 12
 originalUpperFaceLayerIndex = 'Face'
-originalLowerFaceLayerIndex = 'Face MCH'
+originalLowerFaceLayerIndex = 'Face (MCH)'
 originalRiggedTongueLayerIndex = 18
 
 temporaryAccessoryMchLayerIndex = 7
@@ -953,6 +953,9 @@ rootLayerName = "Root"
 defLayerName = "DEF"
 mchLayerName = "MCH"
 orgLayerName = "ORG"
+charamakerLayerName = "Charamaker bones"
+deformLayerName = "Deform bones"
+nsfwLayerName = "NSFW"
 
 noneBoneGroupIndex = 0
 rootBoneGroupIndex = 1
@@ -1011,22 +1014,14 @@ def getRigifyLayerIndexByName(rigifyLayerName):
     return rigifyLayerName
 
 def setRigifyLayer(rig, index, rigifyLayer):
-    if bpy.app.version[0] == 3:
-        rig.data.rigify_layers[index].name = rigifyLayer.name
-        rig.data.rigify_layers[index].row = rigifyLayer.row
-        rig.data.rigify_layers[index].group = rigifyLayer.group
-    else:
-        if rig.data.collections_all.get(str(index)):
-            rig.data.collections_all[str(index)].rigify_ui_title = rigifyLayer.name
-            rig.data.collections_all[str(index)].rigify_ui_row = rigifyLayer.row
-            rig.data.collections_all[str(index)].rigify_color_set_id = rigifyLayer.group
+    if rig.data.collections_all.get(str(index)):
+        rig.data.collections_all[str(index)].rigify_ui_title = rigifyLayer.name
+        rig.data.collections_all[str(index)].rigify_ui_row = rigifyLayer.row
+        rig.data.collections_all[str(index)].rigify_color_set_id = rigifyLayer.group
     
 def setRootRigifyLayer(rig, boneGroupIndex):
-    if bpy.app.version[0] == 3:
-        rig.data.rigify_layers[rootLayerIndex].group = boneGroupIndex
-    else:
-        if rig.data.collections_all.get(str(rootLayerIndex)):
-            rig.data.collections_all[str(rootLayerIndex)].rigify_color_set_id = boneGroupIndex
+    if rig.data.collections_all.get(str(rootLayerIndex)):
+        rig.data.collections_all[str(rootLayerIndex)].rigify_color_set_id = boneGroupIndex
 
 mmdOriginalBoneLayerName = "Original bones"        
 mmdRenamedRequiredDictionaryLayerName = "Renamed required dictionary"
@@ -1155,36 +1150,53 @@ def assignSingleBoneLayer_except(rig, boneName, layerIndex):
         #bone didn't exist
 
 def assignSingleBoneLayer(rig, boneName: str, layerName: str):
+    if bone := rig.data.bones.get(boneName):
+        original_mode = bpy.context.object.mode
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        bone.collections.clear()
+        if rig.data.collections.get(layerName):
+            rig.data.collections[layerName].assign(bone)
+        else:
+            rig.data.collections.new(layerName)
+            rig.data.collections[layerName].assign(bone)
+        bpy.ops.object.mode_set(mode = original_mode)
+
+def setTweakLayer(rig, boneName, tweakLayerName):
+    if boneName in rig.pose.bones:
+        if not len(rig.pose.bones[boneName].rigify_parameters.tweak_coll_refs):
+            rig.pose.bones[boneName].rigify_parameters.tweak_coll_refs.add()
+        if not rig.data.collections.get(tweakLayerName):
+            rig.data.collections.new(tweakLayerName)
+        rig.pose.bones[boneName].rigify_parameters.tweak_coll_refs[0].name = tweakLayerName
+
+def setFKLayer(rig, boneName, fkLayerName):
+    if boneName in rig.pose.bones:
+        if not len(rig.pose.bones[boneName].rigify_parameters.fk_coll_refs):
+            rig.pose.bones[boneName].rigify_parameters.fk_coll_refs.add()
+        if not rig.data.collections.get(fkLayerName):
+            rig.data.collections.new(fkLayerName)
+        rig.pose.bones[boneName].rigify_parameters.fk_coll_refs[0].name = fkLayerName
+
+def setExtraIKLayer(rig, boneName, ikLayerName):
+    if boneName in rig.pose.bones:
+        if not len(rig.pose.bones[boneName].rigify_parameters.extra_ik_coll_refs):
+            rig.pose.bones[boneName].rigify_parameters.extra_ik_coll_refs.add()
+        if not rig.data.collections.get(ikLayerName):
+            rig.data.collections.new(ikLayerName)
+        rig.pose.bones[boneName].rigify_parameters.extra_ik_coll_refs[0].name = ikLayerName
+
+def assignMultipleBoneLayer(rig, boneName, layerIndexes):
     original_mode = bpy.context.object.mode
     bpy.ops.object.mode_set(mode = 'OBJECT')
     bone = rig.data.bones[boneName]
     bone.collections.clear()
-    if rig.data.collections.get(layerName):
-        rig.data.collections[layerName].assign(bone)
-    else:
-        rig.data.collections.new(layerName)
-        rig.data.collections[layerName].assign(bone)
+    for layerIndex in layerIndexes:
+        if rig.data.collections.get(str(layerIndex)):
+            rig.data.collections[str(layerIndex)].assign(bone)
+        else:
+            rig.data.collections.new(str(layerIndex))
+            rig.data.collections[str(layerIndex)].assign(bone)
     bpy.ops.object.mode_set(mode = original_mode)
-
-def assignMultipleBoneLayer(rig, boneName, layerIndexes):
-    if bpy.app.version[0] == 3:
-        for layerIndex in layerIndexes:
-            bone.layers[layerIndex] = True
-        for index in range(32):
-            if index not in layerIndexes:
-                bone.layers[index] = False
-    else:
-        original_mode = bpy.context.object.mode
-        bpy.ops.object.mode_set(mode = 'OBJECT')
-        bone = rig.data.bones[boneName]
-        bone.collections.clear()
-        for layerIndex in layerIndexes:
-            if rig.data.collections.get(str(layerIndex)):
-                rig.data.collections[str(layerIndex)].assign(bone)
-            else:
-                rig.data.collections.new(str(layerIndex))
-                rig.data.collections[str(layerIndex)].assign(bone)
-        bpy.ops.object.mode_set(mode = original_mode)
 
             
 def assignSingleBoneLayerToList(rig, boneNamesList, layerIndex):
@@ -1245,7 +1257,7 @@ def lockAllPoseTransforms(rig, boneName):
     rig.pose.bones[boneName].lock_scale[0] = True
     rig.pose.bones[boneName].lock_scale[1] = True
     rig.pose.bones[boneName].lock_scale[2] = True
-                
+
 bonesWithDrivers = [
 waistJointCorrectionBoneName,
 leftButtockJointCorrectionBoneName, 
