@@ -132,10 +132,6 @@ class post_operations(bpy.types.Operator):
         bpy.ops.transform.translate(value=(0, -1 * 0.0003, 0))
         c.switch(c.get_body(), 'object')
 
-        #delete the kage material
-        bpy.context.object.active_material_index = c.get_body().data.materials.find('KK cf_m_eyeline_kage')
-        bpy.ops.object.material_slot_remove()
-
         ignore_list = [
             'KK Eyebrows (mayuge) ' + c.get_name(),
             'KK EyeL (hitomi) ' + c.get_name(),

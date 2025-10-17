@@ -16,7 +16,7 @@ class Combiner(bpy.types.Operator):
         bpy.ops.kkbp.refresh_ob_data()
         for index, object in enumerate([o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'MESH' and not o.hide_get()]):
             #check if this object is worth doing anything with 
-            if not [mat_slot.material for mat_slot in object.material_slots if mat_slot.material.get('simple')]:
+            if not [mat_slot.material for mat_slot in object.material_slots if mat_slot.material.get('name')]:
                 continue
             
             set_ob_mode(context.view_layer, scn.kkbp_ob_data)
@@ -39,18 +39,16 @@ class Combiner(bpy.types.Operator):
                 self.report({'ERROR'}, text)
                 return {'FINISHED'}
             
-            bake_types = []
-            if scn.kkbp.bake_light_bool:
-                bake_types.append('light')
-            if scn.kkbp.bake_dark_bool:
-                bake_types.append('dark')
-            if scn.kkbp.bake_norm_bool:
-                bake_types.append('normal')
+            bake_types = ['light', 'dark', 'normal']
 
             for type in bake_types:
                 #replace all images
-                for material in [mat_slot.material for mat_slot in object.material_slots if mat_slot.material.get('simple')]:
-                    image = material.node_tree.nodes['textures'].node_tree.nodes[type].image
+                for material in [mat_slot.material for mat_slot in object.material_slots if mat_slot.material.get('name')]:
+                    if node := material.node_tree.nodes.get(type):
+                        image = node.image
+                    else:
+                        continue
+                    
                     if image:
                         if image.name == 'Template: Placeholder':
                             image = None
