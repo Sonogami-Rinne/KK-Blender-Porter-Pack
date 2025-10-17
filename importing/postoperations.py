@@ -118,38 +118,23 @@ class post_operations(bpy.types.Operator):
         c.kklog('Applying Cycles adjustments...')
         c.import_from_library_file('NodeTree', ['.Cycles', '.Cycles no shadows', '.Cycles Classic'], True)
         c.import_from_library_file('Image', ['Template: Black'], True)
-
-        #remove outline modifier
-        for o in bpy.context.view_layer.objects:
-            for m in o.modifiers:
-                if(m.name == "Outline Modifier"):
-                    m.show_viewport = False
-                    m.show_render = False
                     
         ####fix the eyelash mesh overlap
         # deselect everything and make body active object
-        body = c.get_body()
-        bpy.ops.object.select_all(action='DESELECT')
-        body.select_set(True)
-        bpy.context.view_layer.objects.active=body
-        bpy.ops.object.mode_set(mode = 'EDIT')
-        # define some stuff
-        ops = bpy.ops
-        obj = ops.object
-        mesh = ops.mesh
-        context = bpy.context
-        object = context.object
-        # edit mode and deselect everything
-        obj.mode_set(mode='EDIT')
-        mesh.select_all(action='DESELECT')
-        # delete eyeline down verts and kage faces
-        object.active_material_index = 6
-        obj.material_slot_select()
-        mesh.delete(type='VERT')
-        object.active_material_index = 5
-        obj.material_slot_select()
-        mesh.delete(type='ONLY_FACE')
-        mesh.select_all(action='DESELECT')
+        c.switch(c.get_body(), 'edit')
+
+        # move the eyeline out a bit
+        bpy.context.object.active_material_index = c.get_body().data.materials.find('KK cf_m_eyeline_down')
+        bpy.ops.object.material_slot_select()
+        bpy.ops.transform.translate(value=(0, -1 * 0.0002, 0))
+        bpy.context.object.active_material_index = c.get_body().data.materials.find('KK cf_m_eyeline_00_up')
+        bpy.ops.object.material_slot_select()
+        bpy.ops.transform.translate(value=(0, -1 * 0.0003, 0))
+        c.switch(c.get_body(), 'object')
+
+        #delete the kage material
+        bpy.context.object.active_material_index = c.get_body().data.materials.find('KK cf_m_eyeline_kage')
+        bpy.ops.object.material_slot_remove()
 
         ignore_list = [
             'KK Eyebrows (mayuge) ' + c.get_name(),
@@ -164,124 +149,52 @@ class post_operations(bpy.types.Operator):
 
         #add cycles node group
         for object in everything:
-            for node_tree in [mat_slot.material.node_tree for mat_slot in object.material_slots if mat_slot.material.get('bake') and mat_slot.material.name not in ignore_list]:
+            for node_tree in [mat_slot.material.node_tree for mat_slot in object.material_slots if mat_slot.material.name not in ignore_list]:
                 nodes = node_tree.nodes
-                links = node_tree.links
-                if nodes.get('combine'):
-                    nodes['combine'].node_tree = bpy.data.node_groups['.Cycles' if bpy.context.scene.kkbp.shader_dropdown == 'B' else '.Cycles Classic']
-                    #setup the node links again because they break when you replace the node group
-                    def relink(outnode, outport, innode, inport):
-                        try:
-                            links.new(nodes[outnode].outputs[outport], nodes[innode].inputs[inport])
-                        except:
-                            c.kklog(f'Could not link these nodes on tree: {node_tree.name} | {outnode}:{outport} to {innode}:{inport}')
-                    relink('combine',   0,                      'out',     0)
-                    relink('light',     0,                      'combine', 'Light colors')
-                    relink('dark',      0,                      'combine', 'Dark colors')
-                    relink('textures', 'Main texture (alpha)',  'combine', 'Main texture (alpha)')
-                    relink('textures', 'Alpha mask',            'combine', 'Alpha mask')
-                    relink('textures', 'Alpha mask (alpha)',    'combine', 'Alpha mask (alpha)')
-                    relink('textures', 'Alpha mask (custom)',   'combine', 'Alpha mask (custom)')
+                if nodes.get('shader'):
+                    nodes['shader'].node_tree = bpy.data.node_groups['.Cycles' if bpy.context.scene.kkbp.shader_dropdown == 'B' else '.Cycles Classic']
 
                     #Cycles makes missing images PINK (?!) instead of black for some reason and this screws with the shaders
                     #If an image is missing, fill it in with Template: Black
-                    if nodes.get('textures'):
-                        for image_node in [n for n in nodes['textures'].node_tree.nodes if n.type == 'TEX_IMAGE']:
+                    if nodes.get('_NMP_CNV.png'):
+                        for image_node in [n for n in nodes if n.type == 'TEX_IMAGE']:
                             if not image_node.image:
                                 image_node.image = bpy.data.images['Template: Black']
-
-                    #disable detail shine color too
-                    if nodes.get('light'):
-                        if nodes['light'].inputs.get('Detail intensity (shine)'):
-                            nodes['light'].inputs['Detail intensity (shine)'].default_value = 0
-
-                    if nodes.get('dark'):
-                        if nodes['dark'].inputs.get('Detail intensity (shine)'):
-                            nodes['dark'].inputs['Detail intensity (shine)'].default_value = 0
         
-        #remove linemask and blush on face material
-        if c.get_body():
-            face_material = [m.material for m in c.get_body().material_slots if 'KK Face' in m.material.name]
-            if face_material:
-                face_material[0].node_tree.nodes['light'].inputs['Linemask intensity'].default_value = 0
-                face_material[0].node_tree.nodes['dark'].inputs['Linemask intensity'].default_value = 0
-                face_material[0].node_tree.nodes['light'].inputs['Blush intensity'].default_value = 0
-                face_material[0].node_tree.nodes['dark'].inputs['Blush intensity'].default_value = 0
-
         #set eyeline up and eyebrows as shadowless
-        shadowless_mats =      [m.material for m in c.get_body().material_slots if 'KK Eyeline up'          in m.material.name]
-        shadowless_mats.extend([m.material for m in c.get_body().material_slots if 'KK Eyebrows (mayuge)'   in m.material.name])
-        for mat in shadowless_mats:
-            mat.node_tree.nodes['combine'].node_tree = bpy.data.node_groups['.Cycles no shadows']
-            nodes = mat.node_tree.nodes
-            links = mat.node_tree.links
-            def relink(outnode, outport, innode, inport):
-                try:
-                    links.new(nodes[outnode].outputs[outport], nodes[innode].inputs[inport])
-                except:
-                    c.kklog(f'Could not link these nodes on tree: {node_tree.name} | {outnode}:{outport} to {innode}:{inport}')
-            relink('combine',   0,                      'out',     0)
-            relink('light',     0,                      'combine', 'Light colors')
-            relink('dark',      0,                      'combine', 'Dark colors')
-            relink('textures', 'Main texture (alpha)',  'combine', 'Main texture (alpha)')
-            relink('textures', 'Alpha mask',            'combine', 'Alpha mask')
-            relink('textures', 'Alpha mask (alpha)',    'combine', 'Alpha mask (alpha)')
-            relink('textures', 'Alpha mask (custom)',   'combine', 'Alpha mask (custom)')
-        
+        shadowless_mats =  ['KK cf_m_eyeline_00_up', 'KK cf_m_eyeline_down', 'KK cf_m_mayuge_00']
+        for mat_name in shadowless_mats:
+            if mat := bpy.data.materials.get(mat_name):
+                if node := mat.node_tree.nodes.get('shader'):
+                    node.node_tree = bpy.data.node_groups['.Cycles no shadows']
+                
         bpy.context.scene.render.engine = 'CYCLES'
         bpy.context.scene.cycles.preview_samples = 10
-        mesh.select_all(action='DESELECT')
-        obj.mode_set(mode='OBJECT')
 
     def apply_eeveemod(self):
         if not bpy.context.scene.kkbp.shader_dropdown == 'C':
             return
-        c.import_from_library_file('NodeTree', ['.Eevee Mod', '.Eevee Mod (face)'], True)
+        c.import_from_library_file('NodeTree', ['.Eevee Mod'], True)
 
         c.kklog('Applying Eevee Shader adjustments...')
         #Import eevee mod node group and replace the combine colors group with the eevee mod group
         ignore_list = [
-            'KK Eyebrows (mayuge) ' + c.get_name(),
-            'KK EyeL (hitomi) ' + c.get_name(),
-            'KK EyeR (hitomi) ' + c.get_name(),
-            'KK Eyeline up ' + c.get_name(),
-            'KK Eyewhites (sirome) ' + c.get_name()]
+            'KK cf_m_mayuge_00',
+            'KK cf_m_hitomi_00_cf_Ohitomi_L02',
+            'KK cf_m_hitomi_00_cf_Ohitomi_R02',
+            'KK cf_m_eyeline_00_up',
+            'KK cf_m_sirome_00']
         everything = [c.get_body()]
         everything.extend(c.get_hairs())
         everything.extend(c.get_alts())
         everything.extend(c.get_outfits())
         
         for object in everything:
-            for node_tree in [mat_slot.material.node_tree for mat_slot in object.material_slots if mat_slot.material.get('bake') and mat_slot.material.name not in ignore_list]:
+            for node_tree in [mat_slot.material.node_tree for mat_slot in object.material_slots if mat_slot.material.name not in ignore_list]:
                 nodes = node_tree.nodes
                 links = node_tree.links
-                if nodes.get('combine'):
-                    nodes['combine'].node_tree = bpy.data.node_groups['.Eevee Mod']
-                    #setup the node links again because they break when you replace the node group
-                    def relink(outnode, outport, innode, inport):
-                        try:
-                            links.new(nodes[outnode].outputs[outport], nodes[innode].inputs[inport])
-                        except:
-                            c.kklog(f'Could not link these nodes on tree: {node_tree.name} | {outnode}:{outport} to {innode}:{inport}')
-                    relink('combine',   0,                      'out',     0)
-                    relink('light',     0,                      'combine', 'Light colors')
-                    relink('dark',      0,                      'combine', 'Dark colors')
-                    relink('textures', 'Main texture (alpha)',  'combine', 'Main texture (alpha)')
-                    relink('textures', 'Alpha mask',            'combine', 'Alpha mask')
-                    relink('textures', 'Alpha mask (alpha)',    'combine', 'Alpha mask (alpha)')
-                    relink('textures', 'Alpha mask (custom)',   'combine', 'Alpha mask (custom)')
-
-        if bpy.app.version[0] == 3:
-            #turn on ambient occlusion and bloom in render settings
-            bpy.context.scene.eevee.use_gtao = True
-
-            #turn on bloom in render settings
-            bpy.context.scene.eevee.use_bloom = True
-
-            #face has special normal setup. make a copy and add the normals inside of the copy
-            #this group prevents Amb Occ issues around nose, and mouth interior
-            face_nodes = bpy.data.node_groups['.Eevee Mod (face)']
-            face_nodes.use_fake_user = True
+                if nodes.get('shader'):
+                    nodes['shader'].node_tree = bpy.data.node_groups['.Eevee Mod']
 
         #select entire face and body, then reset vectors to prevent Amb Occ seam around the neck 
         body = c.get_body()
@@ -376,50 +289,14 @@ class post_operations(bpy.types.Operator):
         delete_group_and_bone(body, delete_list)
         #also do this on the clothes because the bra can show up
         delete_list = ['cf_s_bnip02_L', 'cf_s_bnip02_R', 'cf_s_bnip025_L', 'cf_s_bnip025_R', ]
-        for ob in [o for o in bpy.data.objects if o.get('KKBP tag') == 'outfit']:
+        for ob in [o for o in bpy.data.objects if o.get('outfit')]:
             delete_group_and_bone(ob, delete_list)
 
-        #force the sfw alpha mask on the body
-        for mat_prefix in ['KK Body', 'Outline Body']:
-            body_mat = body.material_slots[mat_prefix + ' ' + c.get_name()].material
-            body_mat.node_tree.nodes["combine"].inputs['Force custom mask'].default_value = 1
-            new_group = body_mat.node_tree.nodes['combine'].node_tree.copy()
-            body_mat.node_tree.nodes['combine'].node_tree = new_group
-            if bpy.app.version[0] == 3:
-                new_group.inputs['Force custom mask'].hide_value = True
-            else:
-                new_group.interface.items_tree['Force custom mask'].hide_value = True
-
-        #get rid of the nsfw groups on the body
-        body_mat = body.material_slots['KK Body ' + c.get_name()].material
-        body_mat.node_tree.nodes.remove(body_mat.node_tree.nodes['texturesnsfw'])
-
-        for nono in [
-            'Nipple',
-            'Nipple (alpha)',
-            'Genital',
-            'Underhair',
-            'Genital intensity',
-            'Genital saturation', 
-            'Genital hue', 
-            'Underhair color', 
-            'Underhair intensity', 
-            'Nipple base', 
-            'Nipple base 2', 
-            'Nipple shine', 
-            'Nipple rim']:
-            if bpy.app.version[0] == 3:
-                body_mat.node_tree.nodes['light'].node_tree.inputs.remove(body_mat.node_tree.nodes['light'].node_tree.inputs[nono])
-            else:
-                body_mat.node_tree.nodes['light'].node_tree.interface.remove(body_mat.node_tree.nodes['light'].node_tree.interface.items_tree[nono])
-
-        #delete nsfw bones if sfw mode enebled
+        #delete nsfw bones
         rig = c.get_rig()
         if bpy.context.scene.kkbp.sfw_mode and bpy.context.scene.kkbp.armature_dropdown == 'Rigify':
-            if bpy.app.version[0] != 3:
-                rig.data.collections_all['29'].is_visible = True
+            rig.data.collections_all['NSFW'].is_visible = True
             def delete_bone(group_list):
-                #delete bones too
                 bpy.ops.object.mode_set(mode = 'OBJECT')
                 bpy.ops.object.select_all(action='DESELECT')
                 rig.select_set(True)
@@ -461,8 +338,8 @@ class post_operations(bpy.types.Operator):
             #'cf_s_bust03_R',
             'cf_s_bust02_R',]
             delete_bone(delete_list)
-            if bpy.app.version[0] != 3:
-                rig.data.collections_all['29'].is_visible = False
+            rig.data.collections_all['NSFW'].is_visible = False
+            rig.data.collections_all['NSFW'].name = 'Chest'
 
     def separate_meshes(self):
         if bpy.context.scene.kkbp.categorize_dropdown == 'B':

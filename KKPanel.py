@@ -194,65 +194,26 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         box = layout.box()
         col = box.column(align=True)
         
-        # row = col.row(align=True)
-        # row.operator('kkbp.debug', text = 'Debug', icon='FILE_FOLDER')
-
         row = col.row(align=True)
         row.operator('kkbp.kkbpimport', text = t('import_model'), icon='FILE_FOLDER')
-        row.enabled = scene.plugin_state not in ['imported', 'prepped']
                     
         row = col.row(align = True)
         box = row.box()
         col = box.column(align=True)
         
         row = col.row(align=True)
+        row.prop(context.scene.kkbp, "shader_dropdown")
+
+        row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "categorize_dropdown")
         split.prop(context.scene.kkbp, "armature_dropdown")
-        split.enabled = scene.plugin_state not in ['imported', 'prepped']
         
-        row = col.row(align=True)
-        split = row.split(align = True, factor=splitfac)
-        split.prop(context.scene.kkbp, "shader_dropdown")
-        row.enabled = scene.plugin_state not in ['imported', 'prepped']
-
-        # row = col.row(align=True)
-        # split = row.split(align = True, factor=splitfac)
-        # split.prop(context.scene.kkbp, "colors_dropdown", toggle=True, text = t('dark_F') if scene.colors_dropdown else t('dark_C'))
-        # # split.prop(context.scene.kkbp, "delete_cache", toggle=True, text = t('delete_cache'))
-        # row.enabled = scene.plugin_state not in ['imported', 'prepped']
-
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = t('seams'))
-        # split.prop(context.scene.kkbp, "use_material_fake_user", toggle=True, text = t('keep_templates'))
-        row.enabled = scene.plugin_state not in ['imported', 'prepped']
-
-        row = col.row(align=True)
-        split = row.split(align = True, factor=splitfac)
-        split.prop(context.scene.kkbp, "use_single_outline", toggle=True, text = t('outline'))
         split.prop(context.scene.kkbp, "sfw_mode", toggle=True, text = t('sfw_mode'))
-        row.enabled = scene.plugin_state not in ['imported', 'prepped']
         
-        # col = box.column(align=True)
-        # row = col.row(align=True)
-        # row.operator('kkbp.bakematerials', text = t('bake'), icon='OUTPUT')
-        # row.enabled = scene.plugin_state in ['imported', 'prepped']
-        # row = col.row(align=True)
-        # split = row.split(align=True, factor=0.33)
-        # split.prop(context.scene.kkbp, "bake_light_bool", toggle=True, text = t('bake_light'))
-        # split.prop(context.scene.kkbp, "bake_dark_bool", toggle=True, text = t('bake_dark'))
-        # split.prop(context.scene.kkbp, "bake_norm_bool", toggle=True, text = t('bake_norm'))
-        # row.enabled = scene.plugin_state in ['imported', 'prepped']
-        # row = col.row(align=True)
-        # split = row.split(align=True, factor=splitfac)
-        # split.prop(context.scene.kkbp, 'old_bake_bool', toggle=True, text = t('old_bake'))
-        # split.prop(context.scene.kkbp, "bake_mult", text = t('bake_mult'))
-        # row.enabled = scene.plugin_state in ['imported', 'prepped']
-        # row = col.row(align = True)
-        # split = row.split(align=True, factor=splitfac)
-        # row.enabled = scene.plugin_state in ['imported', 'prepped']
-
 class EXPORTING_PT_panel(bpy.types.Panel):
     bl_parent_id = "IMPORTING_PT_panel"
     bl_label = 'Exporting'
