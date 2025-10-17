@@ -52,7 +52,7 @@ def reg_unreg(register_bool):
     from .extras.matcombswitch import mat_comb_switch
     from .extras.resetmaterials import reset_materials
     from .extras.linkhair import link_hair
-
+    from .extras.editmaterial import edit_material, revert_material, save_material
     from .extras.torestpose import ApplyPoseAsRestPosePlus
 
     from . KKPanel import PlaceholderProperties
@@ -62,6 +62,7 @@ def reg_unreg(register_bool):
         EXPORTING_PT_panel,
         EXTRAS_PT_panel,
         HAIR_PT_panel,
+        EDIT_PT_panel
     )
 
     classes = (
@@ -89,7 +90,9 @@ def reg_unreg(register_bool):
         InstallPIL,
         reset_materials,
         link_hair,
-
+        edit_material,
+        revert_material,
+        save_material,
         ApplyPoseAsRestPosePlus,
 
         kkbp_import,
@@ -104,6 +107,7 @@ def reg_unreg(register_bool):
         EXPORTING_PT_panel,
         EXTRAS_PT_panel,
         HAIR_PT_panel,
+        EDIT_PT_panel
         )
 
     for cls in classes:

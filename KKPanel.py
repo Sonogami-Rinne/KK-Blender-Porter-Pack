@@ -391,8 +391,29 @@ class HAIR_PT_panel(bpy.types.Panel):
         layout = self.layout
         mat = context.material
         if mat:
-            if mat.get('hair'):
+            if mat.get('hair') and mat.get('edit'):
                 layout.operator('kkbp.linkhair', text = t('link_hair'), icon='NODETREE')
+
+#Add a button to the materials tab that lets you edit a material, like in KKBP 8.0
+class EDIT_PT_panel(bpy.types.Panel):
+    #bl_parent_id = "EEVEE_MATERIAL_PT_surface"
+    bl_label = "kkbp_edit"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "material"
+    bl_options = {'HIDE_HEADER'}
+    COMPAT_ENGINES = {'BLENDER_EEVEE', 'BLENDER_EEVEE_NEXT'}
+
+    def draw(self, context):
+        layout = self.layout
+        mat = context.material
+        if mat:
+            if mat.get('edit'):
+                split = layout.split(align=True, factor=0.5)
+                split.operator('kkbp.revertmaterial', text = 'Revert', icon='NODETREE')
+                split.operator('kkbp.savematerial', text = 'Save', icon='NODETREE')
+            elif mat.get('hair') or mat.get('clothes') or mat.get('body'):
+                layout.operator('kkbp.editmaterial', text = 'Edit material', icon='NODETREE')
 
 def register():
     bpy.utils.register_class(PlaceholderProperties)
@@ -401,8 +422,10 @@ def register():
     bpy.utils.register_class(EXPORTING_PT_panel)
     bpy.utils.register_class(EXTRAS_PT_panel)
     bpy.utils.register_class(HAIR_PT_panel)
+    bpy.utils.register_class(EDIT_PT_panel)
 
 def unregister():
+    bpy.utils.unregister_class(EDIT_PT_panel)
     bpy.utils.unregister_class(HAIR_PT_panel)
     bpy.utils.unregister_class(EXTRAS_PT_panel)
     bpy.utils.unregister_class(EXPORTING_PT_panel)
