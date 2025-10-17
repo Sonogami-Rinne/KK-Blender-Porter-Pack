@@ -438,11 +438,8 @@ class modify_mesh(bpy.types.Operator):
             keyName.find('Tear_big'),
             keyName.find('Tear_med'),
             keyName.find('Tear_small')]
-            # The eyewhites will clip through the eyes if this key is activated. This can be fixed by adjusting the material order in Blender.
-            # I don't know if this will work in other programs though, so I'm only going to activate it if the user has chosen the Rigify armature.
-            # This give me some kind of hint that the user will only be using the model in blender, so it's okay that they clip because it can be fixed
-            if bpy.context.scene.kkbp.armature_dropdown == 'Rigify':
-                eyes.append(keyName.find("EyeWhites"))
+            # The eyewhites will clip through the eyes if this key is activated.
+            # eyes.append(keyName.find("EyeWhites"))
             if not all(v == -1 for v in eyes):
                 return 'Eyes'
             mouth = [keyName.find("NoseB"),
@@ -569,12 +566,12 @@ class modify_mesh(bpy.types.Operator):
             shapekey_block = bpy.data.shape_keys[c.get_body().data.shape_keys.name].key_blocks
             for shapekey in shapekey_block:
                 if shapekey.name.startswith('KK Eyes'):
-                    shapekey.slider_max = 1 - value
+                    shapekey.slider_max = 1.1*(1 - value)
 
             if 'KK Eyes_default_cl' in shapekey_block:
                 c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_min = value
                 c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].value = value
-                c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = 1
+                c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = 1.1
 
             c.print_timer('correct shapekeys')
 
