@@ -250,7 +250,6 @@ class modify_material(bpy.types.Operator):
             '_DetailNormal.png': '_NMPD_CNV.png'
         }
 
-        # c.import_from_library_file(category='Material', list_of_items=["KK Light Dark Texture"], use_fake_user=True)
         textures = list(remap.keys())
 
         target_materials = c.json_file_manager.get_json_file(f"{prefix}_LightDarkMaterials.json")
@@ -262,15 +261,10 @@ class modify_material(bpy.types.Operator):
             if mesh.material_slots.get(original_material):
                 template = bpy.data.materials[target_material].copy()
                 template[mesh_type] = True
-
                 template['name'] = c_name
                 template['id'] = original_material
-                template['bake'] = False
                 template.name = prefix + ' ' + original_material
                 mesh.material_slots[original_material].material = template
-                # template_group = template.node_tree.nodes['textures'].node_tree.copy()
-                # template_group.name = 'Tex ' + original_material + ' ' + c_name
-                # template.node_tree.nodes['textures'].node_tree = template_group
             else:
                 c.kklog(
                     f'material or template wasn\'t found when replacing body materials: {str(original_material)}, {target_material}', 'warn')
@@ -291,7 +285,7 @@ class modify_material(bpy.types.Operator):
                     # Update the shader
                     swap_mesh_material(material_name, f'{prefix} Light Dark Texture', mesh_type, mesh)
                     material = mesh.material_slots[material_index].material
-                    material.node_tree.nodes["AlphaMask Stage Switch"].outputs[0].default_value = 2
+                    material.node_tree.nodes["shader"].inputs[0].default_value = 2
 
                     for texture_name in textures:
                         if image := bpy.data.images.get(material_name + texture_name):
@@ -369,9 +363,11 @@ class modify_material(bpy.types.Operator):
             material.surface_render_method = 'BLENDED'
         
         #move the eyeline down material slot up so it doesn't appear over the eyeline up
-        c.switch(c.get_body(), 'object')
-        if mat := c.get_body().material_slots.get('KK cf_m_eyeline_down'):
-            c.get_body().active_material_index = c.get_body().data.materials.find(mat)
+        body = c.get_body()
+        c.switch(body, 'object')
+        if mat := body.material_slots.get('KK cf_m_eyeline_down'):
+            print(body.data.materials.find(mat.name))
+            body.active_material_index = body.data.materials.find(mat.name)
             bpy.ops.object.material_slot_move(direction='UP')
             bpy.ops.object.material_slot_move(direction='UP')
 
