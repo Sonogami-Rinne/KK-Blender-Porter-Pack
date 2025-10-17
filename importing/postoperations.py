@@ -13,7 +13,7 @@
 # Parts of cycles replacement was taken from https://github.com/FlailingFog/KK-Blender-Porter-Pack/issues/234
 
 
-import bpy, traceback
+import bpy
 from .. import common as c
 
 class post_operations(bpy.types.Operator):
