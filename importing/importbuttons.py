@@ -64,7 +64,11 @@ class kkbp_import(bpy.types.Operator):
         #The longest material I've encountered is "KK acs_M_nose_tama_00 1290 " and the longest suffix will always be " light.png" at 37 total characters
         #so I'll arbitrarily cut off the name at 24 characters to be safe (needs to be an even number). The .encode() is used to handle multibyte characters like japanese / korean names
         if len(bpy.context.scene.kkbp.character_name.encode()) >= 24:
-            bpy.context.scene.kkbp.character_name = bpy.context.scene.kkbp.character_name.encode()[:24].decode()
+            try:
+                bpy.context.scene.kkbp.character_name = bpy.context.scene.kkbp.character_name.encode()[:24].decode()
+            except:
+                #There was a combination of multibyte and alphanumeric characters that resulted in an odd number
+                bpy.context.scene.kkbp.character_name = bpy.context.scene.kkbp.character_name.encode()[:23].decode()
 
         c.json_file_manager.init()
 

@@ -362,7 +362,7 @@ class modify_material(bpy.types.Operator):
         for mat in mats:
             material = bpy.data.materials.get(f'{prefix} ' + mat)
             material.surface_render_method = 'BLENDED'
-            material.use_transparency_overlap = False
+            # material.use_transparency_overlap = False
         
         #move the eyeline down material slot up so it doesn't appear over the eyeline up
         body = c.get_body()
