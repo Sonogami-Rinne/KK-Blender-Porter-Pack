@@ -301,11 +301,12 @@ class modify_material(bpy.types.Operator):
                 shaders = ['Shader Forge/main_alpha', 'Koikano/main_clothes_alpha', 'xukmi/MainAlphaPlus', 'xukmi/MainAlphaPlusTess', 'xukmi/MainItemAlphaPlus', 'IBL_Shader_alpha', ]
                 #find this material in the MaterialDataComplete.json and see if it's an alpha shader
                 material = material_slot.material
-                print(c.get_shader_name(material['id']))
-                print(material.name)
+                # print(c.get_shader_name(material['id']))
+                # print(material.name)
                 if c.get_shader_name(material['id']) in shaders:
                     c.kklog('Detected alpha shader. Setting render method to blended: {}'.format(material['id']))
                     material.surface_render_method = 'BLENDED'
+                    material.use_transparency_overlap = False
 
                 #special exception to clip the emblem image because I am tired of seeing it repeat at the edges
                 if 'KK cf_m_emblem ' in material.name:
@@ -361,6 +362,7 @@ class modify_material(bpy.types.Operator):
         for mat in mats:
             material = bpy.data.materials.get(f'{prefix} ' + mat)
             material.surface_render_method = 'BLENDED'
+            material.use_transparency_overlap = False
         
         #move the eyeline down material slot up so it doesn't appear over the eyeline up
         body = c.get_body()

@@ -566,12 +566,12 @@ class modify_mesh(bpy.types.Operator):
             shapekey_block = bpy.data.shape_keys[c.get_body().data.shape_keys.name].key_blocks
             for shapekey in shapekey_block:
                 if shapekey.name.startswith('KK Eyes'):
-                    shapekey.slider_max = 1.1*(1 - value)
+                    shapekey.slider_max = 1.0*(1 - value)
 
             if 'KK Eyes_default_cl' in shapekey_block:
                 c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_min = value
                 c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].value = value
-                c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = 1.1
+                c.get_body().data.shape_keys.key_blocks['KK Eyes_default_cl'].slider_max = 1.0
 
             c.print_timer('correct shapekeys')
 
