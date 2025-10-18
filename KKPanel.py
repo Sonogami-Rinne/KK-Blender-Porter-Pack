@@ -246,7 +246,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
             col.label(text='Installation complete')
             col.label(text='Please restart Blender')
         else:
-            split.prop(context.scene.kkbp, "use_atlas", toggle=True, text = t('use_atlas') if scene.use_atlas else t('dont_use_atlas'))
+            row.prop(context.scene.kkbp, "use_atlas", toggle=True, text = t('use_atlas') if scene.use_atlas else t('dont_use_atlas'))
             # split.operator('kkbp.resetmaterials', text = t('reset_mats'), icon='RECOVER_LAST')
 
 class EXTRAS_PT_panel(bpy.types.Panel):

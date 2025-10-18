@@ -3,6 +3,7 @@
 import bpy, traceback, time, os
 from .. import common as c
 from ..interface.dictionary_en import t
+from .material_combiner import globs
 
 def prep_operations(prep_type, simp_type):
 
@@ -137,6 +138,14 @@ def prep_operations(prep_type, simp_type):
         if mod := body.modifiers.get('Right Eye UV warp'):
             mod.show_viewport = False
 
+def get_image_node(bake_type):
+    dict = {
+        'light': '_light.png',
+        'dark' : '_dark.png',
+        'normal':'_NMP_CNV.png',
+        'detail':'_light.png',
+    }
+    return dict[bake_type]
 
 def create_material_atlas():
     '''Merges all the finalized material png files into a single atlas file, copies the current model and applies the atlas to the copy'''
@@ -162,7 +171,7 @@ def create_material_atlas():
                 if bpy.data.materials.get(simplified_name):
                     simplified_mat = bpy.data.materials[simplified_name]
                     for bake_type in ['light', 'dark', 'normal']:
-                        simplified_mat.node_tree.nodes['textures'].node_tree.nodes[bake_type].image = bpy.data.images.get(simplified_name + ' ' + bake_type + '.png')
+                        simplified_mat.node_tree.nodes[bake_type].image = bpy.data.images.get(simplified_name + ' ' + bake_type + '.png')
         #delete orphan data
         for cat in [bpy.data.armatures, bpy.data.objects, bpy.data.meshes, bpy.data.materials, bpy.data.images, bpy.data.node_groups]:
             for block in cat:
@@ -275,7 +284,7 @@ def create_material_atlas():
                     continue
                 
                 if image:
-                    if image.name == 'Template: Pattern Placeholder':
+                    if image.name in ['Template: Pattern Placeholder', 'Template: Normal detail placeholder']:
                         image = None
                 if not image:
                     print(image)
@@ -291,7 +300,7 @@ def create_material_atlas():
                         atlas_material.name = '{} Atlas'.format(material.name)
                     else:
                         atlas_material =  bpy.data.materials.get('{} Atlas'.format(material.name))
-                    atlas_material.node_tree.nodes['_light.png' if bake_type == 'light' else '_dark.png' if bake_type == 'dark' else '_NMP_CNV.png'].image = atlas_image
+                    atlas_material.node_tree.nodes[get_image_node(bake_type)].image = atlas_image
                     #load in the light image to the dark slot to make it look better when only the light colors are baked.
                     # This will be overwritten with the dark image in the next loop if the user baked it
                     if bake_type == 'light':
@@ -344,7 +353,8 @@ class export_prep(bpy.types.Operator):
         try:
             c.toggle_console()
             prep_operations(prep_type, simp_type)
-            create_material_atlas()
+            if bpy.context.scene.kkbp.use_atlas and globs.pil_exist:
+                create_material_atlas()
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             c.toggle_console()
             return {'FINISHED'}

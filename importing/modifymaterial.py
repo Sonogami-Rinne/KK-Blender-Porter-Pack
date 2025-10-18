@@ -256,13 +256,13 @@ class modify_material(bpy.types.Operator):
         meshes = [('body', c.get_body()), ('tongue', c.get_tongue())]
 
         def swap_mesh_material(original_material: str, target_material: str, mesh_type: str, mesh):
-            c_name = c.get_name()
             # remove dupes and check the material slot actually exists
             if mesh.material_slots.get(original_material):
                 template = bpy.data.materials[target_material].copy()
                 template[mesh_type] = True
-                template['name'] = c_name
+                template['name'] = c.get_name()
                 template['id'] = original_material
+                template['coord'] = mesh.get('coord')
                 template.name = prefix + ' ' + original_material
                 mesh.material_slots[original_material].material = template
             else:

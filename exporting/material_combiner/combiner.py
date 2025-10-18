@@ -1,8 +1,9 @@
-import bpy
+import bpy, os
 from bpy.props import *
 from .combiner_ops import *
 from .packer import BinPacker
 from ... import common as c
+from ..exportprep import get_image_node
 
 class Combiner(bpy.types.Operator):
     bl_idname = 'kkbp.combiner'
@@ -39,18 +40,41 @@ class Combiner(bpy.types.Operator):
                 self.report({'ERROR'}, text)
                 return {'FINISHED'}
             
-            bake_types = ['light', 'dark', 'normal']
+            #TODO: the normal and detail atlases don't work very well due to resolution differences
+            bake_types = ['light', 'dark', 'normal', 'detail']
 
             for type in bake_types:
                 #replace all images
                 for material in [mat_slot.material for mat_slot in object.material_slots if mat_slot.material.get('name')]:
-                    if node := material.node_tree.nodes.get(type):
+                    if node := material.node_tree.nodes.get(get_image_node(type)):
+                        material.node_tree.nodes['Image Texture'].image = None
                         image = node.image
                     else:
                         continue
-                    
+
+                    if type == 'detail':
+                        if material.get('outfit') or material.get('hair'):
+                            id = material.get('id')
+                            coord = material.get('coord')
+                            new_image_path = os.path.join(context.scene.kkbp.import_dir, f'Outfit {coord}', f'{id}_DM.png')
+                            try:
+                                detail_texture = bpy.data.images.load(new_image_path)
+                                image = detail_texture
+                            except:
+                                #no detail mask for this texture
+                                image = None
+                        elif material.get('body'):
+                            id = material.get('id')
+                            new_image_path = os.path.join(context.scene.kkbp.import_dir, f'{id}_DM.png')
+                            try:
+                                detail_texture = bpy.data.images.load(new_image_path)
+                                image = detail_texture
+                            except:
+                                #no detail mask for this texture
+                                image = None
+
                     if image:
-                        if image.name == 'Template: Placeholder':
+                        if image.name in ['Template: Placeholder', 'Template: Normal detail placeholder']:
                             image = None
                     if not image:
                         continue

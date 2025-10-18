@@ -118,6 +118,7 @@ class kkbp_import(bpy.types.Operator):
                 bpy.context.view_layer.objects.active.children[0].children[0]['name'] = c.get_name()
                 #keep track of the outfit ID if this is an outfit
                 if outfit:
+                    bpy.context.view_layer.objects.active.children[0].children[0]['coord'] = outfit_id
                     bpy.context.view_layer.objects.active.children[0].children[0]['id'] = outfit_id
                     bpy.context.view_layer.objects.active.children[0].children[0]['outfit'] = True
                     bpy.context.view_layer.objects.active.children[0].children[0].name = f'Outfit {outfit_id} {c.get_name()}'

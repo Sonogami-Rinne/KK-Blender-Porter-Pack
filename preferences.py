@@ -62,7 +62,7 @@ class KKBPPreferences(bpy.types.AddonPreferences):
 
     use_atlas : BoolProperty(
     description=t('use_atlas'),
-    default = False)
+    default = True)
 
     # delete_cache : BoolProperty(
     # description=t('delete_cache'),
