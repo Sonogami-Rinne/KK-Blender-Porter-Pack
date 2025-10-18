@@ -306,7 +306,7 @@ class modify_material(bpy.types.Operator):
                     material.surface_render_method = 'BLENDED'
                     material.use_transparency_overlap = False
                 
-                shaders - ['Shader Forge/toon_glasses_lod0', 'Koikano/main_clothes_item_glasses']
+                shaders = ['Shader Forge/toon_glasses_lod0', 'Koikano/main_clothes_item_glasses']
                 if c.get_shader_name(material['id']) in shaders:
                     c.kklog('Detected glasses shader. Setting render method to blended: {}'.format(material['id']))
                     material.surface_render_method = 'BLENDED'
