@@ -215,9 +215,7 @@ class edit_material(bpy.types.Operator):
                             image_pixels[start_row:end_row],
                             start_row == 0
                         )
-                        start_row = end_row - 1
-                        if start_row == height - 1:
-                            break
+                        start_row = end_row
 
                         futures.append(future)
 
