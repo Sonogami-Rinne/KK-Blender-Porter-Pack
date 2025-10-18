@@ -285,7 +285,7 @@ class modify_material(bpy.types.Operator):
                     # Update the shader
                     swap_mesh_material(material_name, f'{prefix} Light Dark Texture', mesh_type, mesh)
                     material = mesh.material_slots[material_index].material
-                    material.node_tree.nodes["shader"].inputs[0].default_value = 2 if material_name != 'KK cf_m_face_00' else 0
+                    material.node_tree.nodes["shader"].inputs[0].default_value = 2 if material.name != 'KK cf_m_face_00' else 0
 
                     for texture_name in textures:
                         if image := bpy.data.images.get(material_name + texture_name):
