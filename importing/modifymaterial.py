@@ -298,16 +298,18 @@ class modify_material(bpy.types.Operator):
                     swap_mesh_material(material_slot.material.name, f'KK Transparent', mesh_type, mesh)
 
                 #If the in-game shader of this material is set to "main alpha" or glasses, set the material to "blended" in blender
-                shaders = ['Shader Forge/main_alpha', 'Koikano/main_clothes_alpha', 'xukmi/MainAlphaPlus', 'xukmi/MainAlphaPlusTess', 'xukmi/MainItemAlphaPlus', 'IBL_Shader_alpha', 
-                           'Shader Forge/toon_glasses_lod0', 'Koikano/main_clothes_item_glasses']
+                shaders = ['Shader Forge/main_alpha', 'Koikano/main_clothes_alpha', 'xukmi/MainAlphaPlus', 'xukmi/MainAlphaPlusTess', 'xukmi/MainItemAlphaPlus', 'IBL_Shader_alpha',]
                 #find this material in the MaterialDataComplete.json and see if it's an alpha shader
                 material = material_slot.material
-                # print(c.get_shader_name(material['id']))
-                # print(material.name)
                 if c.get_shader_name(material['id']) in shaders:
                     c.kklog('Detected alpha shader. Setting render method to blended: {}'.format(material['id']))
                     material.surface_render_method = 'BLENDED'
-                    # material.use_transparency_overlap = False
+                    material.use_transparency_overlap = False
+                
+                shaders - ['Shader Forge/toon_glasses_lod0', 'Koikano/main_clothes_item_glasses']
+                if c.get_shader_name(material['id']) in shaders:
+                    c.kklog('Detected glasses shader. Setting render method to blended: {}'.format(material['id']))
+                    material.surface_render_method = 'BLENDED'
 
                 #special exception to clip the emblem image because I am tired of seeing it repeat at the edges
                 if 'KK cf_m_emblem ' in material.name:
