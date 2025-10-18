@@ -212,8 +212,7 @@ class edit_material(bpy.types.Operator):
                         future = executor.submit(
                             self.saturate_texture,
                             unloaded,
-                            image_pixels[start_row:end_row],
-                            start_row == 0
+                            image_pixels[start_row:end_row]
                         )
                         start_row = end_row
 
@@ -580,7 +579,7 @@ class edit_material(bpy.types.Operator):
                 c.kklog('This image was not automatically loaded in because its name exceeds 64 characters: ' + darktex.name, type = 'error')
             return darktex
 
-    def saturate_texture(self, index, slice_image, is_first_batch):
+    def saturate_texture(self, index, slice_image):
         '''The Secret Sauce. Accepts a bpy image and saturates it to match the in-game look.'''
         # Find the XY coordinates of the LUT image needed to saturate each pixel
         coord = slice_image[:, :, :3] * self.coord_scale + self.coord_offset
@@ -601,11 +600,7 @@ class edit_material(bpy.types.Operator):
         lut_colors += lutcol_top * coord_frac_z
         del lutcol_top
         del coord_top
-        # slice_image[:, :, :3] = lut_colors[:,:,:3]
-        if is_first_batch:
-            slice_image[:, :, :3] = lut_colors[:,:,:3]
-        else:
-            slice_image[1:, :, :3] = lut_colors[1:, :, :3]
+        slice_image[:, :, :3] = lut_colors[:,:,:3]
         with self.queue_lock:
             self.data_queue.put(index)
 
