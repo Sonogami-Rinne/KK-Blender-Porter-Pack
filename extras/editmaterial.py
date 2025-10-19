@@ -54,6 +54,7 @@ class edit_material(bpy.types.Operator):
         'o_tang':                            'KK General',}
 
     def execute(self, context):
+        c.json_file_manager = c.JsonFileManager()
         c.json_file_manager.init()
 
         #replace the material with the correct template
@@ -62,14 +63,14 @@ class edit_material(bpy.types.Operator):
         if original_material.get('hair'):
             new_material = self.replace_materials_for_hair_clothes('hair')
             self.load_images(new_material.name)
-            self.link_textures_for_face_body(new_material.name)
+            self.link_textures_for_hair(new_material.name)
             self.create_dark_textures(new_material.name)       
             self.load_json_colors(new_material.name, 'hair')
             
         elif original_material.get('outfit'):
             new_material = self.replace_materials_for_hair_clothes('outfit')
             self.load_images(new_material.name)
-            self.link_textures_for_face_body(new_material.name)
+            self.link_textures_for_clothes(new_material.name)
             self.create_dark_textures(new_material.name)       
             self.load_json_colors(new_material.name, 'outfit')
 
@@ -152,10 +153,12 @@ class edit_material(bpy.types.Operator):
         lut_image = bpy.data.images.load(str(lut_image), check_existing = True)
         lut_image.use_fake_user = True
         self.init_prefab_data()
-        prefixes = material_to_load.replace('Edit ', '')
+        prefixes = bpy.data.materials[material_to_load]['id']
 
         fileList = Path(bpy.context.scene.kkbp.import_dir).rglob(f'{prefixes}*.png')
+        # print([i for i in fileList])
         files = [file for file in fileList if file.is_file() and "_MT" in file.name]
+        print(files)
         unloaded = unprocessed = len(files) # unloaded: unloaded images to saturate, unprocessed: unfinished images that still need to be saturated
         last_miss_time = time.time()  # last time of accessing queue
         current_image_num = 0  # current num of concurrent processing images
@@ -249,7 +252,6 @@ class edit_material(bpy.types.Operator):
                 match base_name:
                     case 'cf_m_face_00':
                         #load in face textures
-                        c.kklog('wtf')
                         self.image_load('cf_m_face_00', '_ST_CT.png')
                         self.image_load('cf_m_face_00', '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
                         #default to colors if there's no maintex
@@ -359,7 +361,7 @@ class edit_material(bpy.types.Operator):
         '''Load all hair textures into their texture slots'''
         hairMat = bpy.data.materials[new_material_name]
         #use the material name instead of hairMat.material['id'] to catch any instances of 00 01 02 materials
-        hairType = hairMat.name.replace('KK ','Edit ')
+        hairType = hairMat.name.replace('Edit ','')
 
         self.image_load( hairType,  '_ST_CT.png')
         self.image_load( hairType,  '_ST_CT.png', node_override='_ST_DT.png') #attempt to default to light in case dark is not available
@@ -373,9 +375,9 @@ class edit_material(bpy.types.Operator):
 
     def link_textures_for_clothes(self, new_material_name):
         '''Load all clothes textures into their texture slots'''
-        genMat = bpy.data.materials[new_material_name]
+        genMat = bpy.context.active_object.material_slots[new_material_name]
         #use the material name instead of genMat.material['id'] to catch any instances of 00 01 02 materials
-        genType = genMat.name.replace('KK ', 'Edit ')
+        genType = genMat.name.replace('Edit ', '')
 
         #load these textures if they are present
         self.image_load(genType, '_ST.png')
@@ -652,21 +654,21 @@ class edit_material(bpy.types.Operator):
                         case 'cf_m_face_00':
                             #face
                             #Note that some headmods have multiple face materials. This will only replace the first one
-                            if c.get_material_names('cf_O_face'):
+                            if material := bpy.data.materials.get(mat_name):
                                 #setup the face material
-                                shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes[light_pass].inputs
+                                shader_inputs = material.node_tree.nodes[light_pass].inputs
                                 if light_pass == 'light':
-                                    shader_inputs['Skin color'].default_value = self.saturate_color(c.json_file_manager.get_color('Edit cf_m_face_00', "_Color "), light_pass = 'light')
+                                    shader_inputs['Skin color'].default_value = self.saturate_color(c.json_file_manager.get_color(material.name, "_Color "), light_pass = 'light')
                                 else:
-                                    shader_inputs['Skin color'].default_value = self.saturate_color(self.skin_dark_color(c.json_file_manager.get_color('Edit cf_m_face_00', "_Color ")), light_pass = 'light')
-                                shader_inputs['Detail color'].default_value =      self.saturate_color(c.json_file_manager.get_color('Edit cf_m_face_00', "_Color2 " ),                       light_pass, shadow_color = c.json_file_manager.get_shadow_color('Edit cf_m_face_00'))
+                                    shader_inputs['Skin color'].default_value = self.saturate_color(self.skin_dark_color(c.json_file_manager.get_color(material.name, "_Color ")), light_pass = 'light')
+                                shader_inputs['Detail color'].default_value =      self.saturate_color(c.json_file_manager.get_color(material.name, "_Color2 " ),                       light_pass, shadow_color = c.json_file_manager.get_shadow_color(material.name))
                                 shader_inputs['Light blush color'].default_value =      self.saturate_color(c.json_file_manager.get_color(mat_name, "_overcolor2 "  ),                light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
                                 shader_inputs['Lipstick multiplier'].default_value =    self.saturate_color(c.json_file_manager.get_color(mat_name, "_overcolor1 "  ),                light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
                         
                         case 'cf_m_body':
                             #set body colors
                             if c.get_body():
-                                if c.get_material_names('o_body_a'):
+                                if material := bpy.data.materials.get(mat_name):
                                     shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes[light_pass].inputs
                                     if light_pass == 'light':
                                         shader_inputs['Skin color'].default_value = self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color "), light_pass = 'light')
@@ -680,24 +682,24 @@ class edit_material(bpy.types.Operator):
 
                         case 'cf_m_mayuge_00':
                             #eyebrows
-                            if c.get_material_names('cf_O_mayuge'):
+                            if material := bpy.data.materials.get(mat_name):
                                 shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['light'].inputs
                                 shader_inputs['Eyebrow color'].default_value =       self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color "))
                                 shader_inputs['Eyebrow color dark'].default_value =  self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color "),  'dark' , shadow_color = c.json_file_manager.get_shadow_color(mat_name))
 
                         case 'cf_O_eyeline_low':
-                            if c.get_material_names('cf_O_eyeline_low'):
+                            if material := bpy.data.materials.get(mat_name):
                                 shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['light'].inputs
                                 shader_inputs['Eyeline down fade color'].default_value = self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
                         
                         case 'cf_O_eyeline':
-                            if c.get_material_names('cf_O_eyeline'):
+                            if material := bpy.data.materials.get(mat_name):
                                 shader_inputs = c.get_body().material_slots[mat_name].material.node_tree.nodes['light'].inputs
                                 shader_inputs['Eyeline fade color'].default_value = self.saturate_color(c.json_file_manager.get_color(mat_name, "_Color "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(mat_name))
                         
                         case 'o_tang':
                             #set the tongue colors if it exists
-                            if c.get_material_names('o_tang') and (tongue := c.get_tongue()):
+                            if bpy.data.materials.get(mat_name) and (tongue := c.get_tongue()):
                                 shader_inputs = tongue.material_slots[0].material.node_tree.nodes[light_pass].inputs
                                 shader_inputs['Maintex Saturation'].default_value = 0.6
                                 shader_inputs['Detail intensity (green)'].default_value = 0.01
@@ -709,11 +711,11 @@ class edit_material(bpy.types.Operator):
 
         elif type == 'hair':
             #set all of the hair colors
-            hair_material = bpy.data.materials[new_material_name]
-            shader_inputs = hair_material.node_tree.nodes[light_pass].inputs
-            shader_inputs['Hair color'].default_value         = self.saturate_color(c.json_file_manager.get_color(hair_material.name, "_Color " ),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(hair_material.name))
-            shader_inputs['Color mask (root)'].default_value  = self.saturate_color(c.json_file_manager.get_color(hair_material.name, "_Color2 "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(hair_material.name))
-            shader_inputs['Color mask (tip)'].default_value = self.saturate_color(c.json_file_manager.get_color(hair_material.name, "_Color3 "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(hair_material.name))
+            material = bpy.data.materials[new_material_name]
+            shader_inputs = material.node_tree.nodes[light_pass].inputs
+            shader_inputs['Hair color'].default_value         = self.saturate_color(c.json_file_manager.get_color(material.name, "_Color " ),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(material.name))
+            shader_inputs['Color mask (root)'].default_value  = self.saturate_color(c.json_file_manager.get_color(material.name, "_Color2 "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(material.name))
+            shader_inputs['Color mask (tip)'].default_value = self.saturate_color(c.json_file_manager.get_color(material.name, "_Color3 "),  light_pass, shadow_color = c.json_file_manager.get_shadow_color(material.name))
 
         elif type == 'outfit':
             #set the clothes colors
@@ -978,7 +980,7 @@ class revert_material(bpy.types.Operator):
         if original_material:
             bpy.context.object.material_slots[edit_material].material = original_material[0]
             #TODO: Why does this crash blender
-            bpy.data.materials.remove(bpy.data.materials[edit_material])
+            # bpy.data.materials.remove(bpy.data.materials[edit_material])
 
         return {'FINISHED'}
     
