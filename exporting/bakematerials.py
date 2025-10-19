@@ -52,8 +52,9 @@ def setup_geometry_nodes_and_fillerplane(camera: bpy.types.Object):
 
     #create fillerplane
     bpy.ops.mesh.primitive_plane_add()
-    bpy.ops.object.material_slot_add()
     fillerplane = bpy.context.active_object
+    c.switch(fillerplane, 'object')
+    fillerplane.data.materials.append(None)
     fillerplane.data.uv_layers[0].name = 'uv_main'
     fillerplane.name = "fillerplane"
     bpy.ops.object.editmode_toggle()
@@ -151,7 +152,7 @@ def bake_pass(folderpath: str, bake_type: str):
     #go through each material slot
     for index, current_material in enumerate(object_to_bake.data.materials):
         #Don't bake this material if it doesn't have the bake tag
-        if not current_material.get('bake'):
+        if not current_material.get('edit'):
             c.kklog(f'Detected material that cannot be finalized. Skipping: {current_material.name}')
             continue
 
@@ -181,7 +182,7 @@ def bake_pass(folderpath: str, bake_type: str):
                     if image_size > largest_so_far:
                         highest_resolution = image_node.image.size
             
-            resolution_multiplier = bpy.context.scene.kkbp.bake_mult
+            resolution_multiplier = 1 #bpy.context.scene.kkbp.bake_mult
             #Render an image using the highest dimensions
             if highest_resolution:
                 bpy.context.scene.render.resolution_x=highest_resolution[0] * resolution_multiplier
@@ -195,7 +196,7 @@ def bake_pass(folderpath: str, bake_type: str):
             #set every material slot except the current material to be transparent
             for matslot in object_to_bake.material_slots:
                 if matslot.material != current_material:
-                    matslot.material = bpy.data.materials['KK Eyeline kage ' + c.get_name()]
+                    matslot.material = bpy.data.materials['KK Transparent']
             
             #set the filler plane to the current material
             bpy.data.objects['fillerplane'].material_slots[0].material = current_material
@@ -259,6 +260,15 @@ def cleanup():
             ob.scale = (1,1,1)
     bpy.data.node_groups.remove(bpy.data.node_groups['.Geometry Nodes'])
 
+def get_image_node(bake_type):
+    dict = {
+        'light': '_light.png',
+        'dark' : '_dark.png',
+        'normal':'_NMP_CNV.png',
+        'detail':'_light.png',
+    }
+    return dict[bake_type]
+
 def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
     #load all baked images into blender
     fileList = pathlib.Path(folderpath).glob('*.png')
@@ -277,269 +287,16 @@ def replace_all_baked_materials(folderpath: str, bake_object: bpy.types.Object):
             c.kklog(f'Could not load in file because the name exceeds 64 characters: {file}')
     
     #now all needed images are loaded into the file. Match each material to it's image textures
-    for bake_type in ['light', 'dark', 'normal']:
-        for mat in bake_object.material_slots:
-            image = bpy.data.images.get(mat.material.name.replace('-ORG', '') + f' {bake_type}.png', '')
+    for bake_type in ['light', 'dark']:
+        for slot in bake_object.material_slots:
+            image = bpy.data.images.get(slot.material.name.replace('-ORG', '') + f' {bake_type}.png', '')
+            print(image)
+            print(slot.name.replace('Edit ', 'KK '))
+            print(slot.material.get(slot.name.replace('Edit ', 'KK ')))
             if image:
-                #the simplified material already exists and is loaded into the material slot, so just load in the image
-                if mat.material.get('simple'):
-                    simple = mat.material
-                    textures_group = simple.node_tree.nodes['textures'].node_tree
-                    textures_group.nodes[bake_type].image = image
-
-                #the simplified material already exists, but the user swapped it back to the -ORG version to rebake it, 
-                # so load the material back into the material slot and load in the image
-                elif mat.material.get('bake') and '-ORG' in mat.material.name and bpy.data.materials.get(mat.material.name.replace('-ORG','')):
-                    simple = bpy.data.materials[mat.material.name.replace('-ORG','')]
-                    mat.material = simple
-                    textures_group = simple.node_tree.nodes['textures'].node_tree
-                    print(mat.material.name)
-                    textures_group.nodes[bake_type].image = image
-
-                #check if a simplified version of this material exists yet. If it doesn't, create it
-                elif mat.material.get('bake'):
-                    #rename the original material to "material_name-ORG" and create the simplified material
-                    mat.material.name += '-ORG'
-                    try:
-                        simple = bpy.data.materials['KK Simple'].copy()
-                    except:
-                        c.import_from_library_file('Material', ['KK Simple'], use_fake_user = False)
-                        simple = bpy.data.materials['KK Simple'].copy()
-                    simple.name = mat.material.name.replace('-ORG', '')
-                    textures_group = simple.node_tree.nodes['textures'].node_tree.copy()
-                    textures_group.name = simple.name
-                    simple.node_tree.nodes['textures'].node_tree = textures_group
-                    textures_group.nodes[bake_type].image = image
-                    # you have the ability to only bake the light textures, but it looks weird if there is no dark texture to go along with it, 
-                    # put the light image into the dark slot. it will be overwritten if the dark texture exists on the next loop
-                    if bake_type == 'light':
-                        textures_group.nodes['dark'].image = image
-
-                    #and then replace the original material with this new simplified one
-                    mat.material.use_fake_user = True
-                    def replace_mat():
-                        if bpy.app.version[0] > 3:
-                            blend_method = mat.material.surface_render_method
-                            mat.material = simple
-                            mat.material.surface_render_method = blend_method
-                            mat.material.use_transparency_overlap = True if ('KK Eyewhites (sirome) ' + c.get_name() in mat.name) else False
-                        else:
-                            blend_method = mat.material.blend_method
-                            mat.material = simple
-                            mat.material.blend_method = blend_method
-                            mat.material.show_transparent_back = False
-                        simple['simple'] = True
-                    replace_mat()
-
-                    #load the Eevee Mod simple shader if using Eevee Mod
-                    if bpy.context.scene.kkbp.shader_dropdown == 'C':
-                        try:
-                            simple = bpy.data.node_groups['.Simple Shader (Eevee Mod)'].copy()
-                        except:
-                            c.import_from_library_file('NodeTree', ['.Simple Shader (Eevee Mod)'], use_fake_user = False)
-                            simple = bpy.data.node_groups['.Simple Shader (Eevee Mod)'].copy()
-                        #and then replace the original material with this new simplified one
-                        mat.material.use_fake_user = True
-                        replace_mat()
-
-def create_material_atlas(folderpath: str):
-    '''Merges all the finalized material png files into a single atlas file, copies the current model and applies the atlas to the copy'''
-    # https://blender.stackexchange.com/questions/127403/change-active-collection
-    #Recursivly transverse layer_collection for a particular name
-    def recurLayerCollection(layerColl, collName):
-        found = None
-        if (layerColl.name == collName):
-            return layerColl
-        for layer in layerColl.children:
-            found = recurLayerCollection(layer, collName)
-            if found:
-                return found
-    
-    def remove_orphan_data():
-        #revert the image back from the atlas file to the baked file   
-        for mat in bpy.data.materials:
-            if mat.name[-4:] == '-ORG':
-                simplified_name = mat.name[:-4]
-                if bpy.data.materials.get(simplified_name):
-                    simplified_mat = bpy.data.materials[simplified_name]
-                    for bake_type in ['light', 'dark', 'normal']:
-                        simplified_mat.node_tree.nodes['textures'].node_tree.nodes[bake_type].image = bpy.data.images.get(simplified_name + ' ' + bake_type + '.png')
-        #delete orphan data
-        for cat in [bpy.data.armatures, bpy.data.objects, bpy.data.meshes, bpy.data.materials, bpy.data.images, bpy.data.node_groups]:
-            for block in cat:
-                if block.users == 0:
-                    cat.remove(block)
-
-    if bpy.data.collections.get(c.get_name() + ' atlas'):
-        c.kklog(f'deleting previous collection "{c.get_name()} atlas" and regenerating atlas model...')
-        def del_collection(coll):
-            for c in coll.children:
-                del_collection(c)
-            bpy.data.collections.remove(coll,do_unlink=True)
-        del_collection(bpy.data.collections[c.get_name() + ' atlas'])
-        remove_orphan_data()
-        #show the original collection again
-        c.show_layer_collection(c.get_name(), False)
-
-    #Change the Active LayerCollection to the character collection
-    layer_collection = bpy.context.view_layer.layer_collection
-    layerColl = recurLayerCollection(layer_collection, c.get_name())
-    bpy.context.view_layer.active_layer_collection = layerColl
-
-    # https://blender.stackexchange.com/questions/157828/how-to-duplicate-a-certain-collection-using-python
-    from collections import  defaultdict
-    def copy_objects(from_col, to_col, linked, dupe_lut):
-        for o in from_col.objects:
-            dupe = o.copy()
-            if not linked and o.data:
-                dupe.data = dupe.data.copy()
-            to_col.objects.link(dupe)
-            dupe_lut[o] = dupe
-    def copy(parent, collection, linked=False):
-        dupe_lut = defaultdict(lambda : None)
-        def _copy(parent, collection, linked=False):
-            cc = bpy.data.collections.new(collection.name)
-            copy_objects(collection, cc, linked, dupe_lut)
-            for c in collection.children:
-                _copy(cc, c, linked)
-            parent.children.link(cc)
-            return cc
-        the_copy = _copy(parent, collection, linked)
-        for o, dupe in tuple(dupe_lut.items()):
-            parent = dupe_lut[o.parent]
-            if parent:
-                dupe.parent = parent
-        return the_copy
-    context = bpy.context
-    scene = context.scene
-    col = context.collection
-    assert(col is not scene.collection)
-    copied_collection = copy(scene.collection, col)
-    copied_collection.name = c.get_name() + ' atlas'
-
-    #setup materials for the combiner script
-    for obj in [o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'MESH']:
-        for mat in [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('simple')]:
-            nodes = mat.node_tree.nodes
-            links = mat.node_tree.links
-            emissive_node = nodes.new('ShaderNodeEmission')
-            emissive_node.name = 'Emission'
-            image_node = nodes.new('ShaderNodeTexImage')
-            image_node.name = 'Image Texture'
-            links.new(emissive_node.inputs[0], image_node.outputs[0])
-            image_node.image = nodes['textures'].node_tree.nodes['light'].image
-        context.view_layer.objects.active = obj
-        bpy.ops.object.material_slot_remove_unused()
-
-    #call the material combiner script
-    bpy.ops.kkbp.combiner()
-
-    #replace all images with the atlas in a new atlas material
-    bake_types = []
-    if scene.kkbp.bake_light_bool:
-        bake_types.append('light')
-    if scene.kkbp.bake_dark_bool:
-        bake_types.append('dark')
-    if scene.kkbp.bake_norm_bool:
-        bake_types.append('normal')
-    for index, obj in enumerate([o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'MESH']):
-        #fix modifiers for all objects in this collection
-        for mod in obj.modifiers:
-            if mod.type == 'ARMATURE':
-                #fix the armature modifier to use the copied aramture
-                copied_armature = [o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'ARMATURE'][0]
-                mod.object = copied_armature
-            elif mod.type == 'SOLIDIFY':
-                #disable the outline on the atlased object because I don't feel like fixing it
-                obj.modifiers['Outline Modifier'].show_render = False
-                obj.modifiers['Outline Modifier'].show_viewport = False
-            elif mod.type == 'UV_WARP':
-                #fix the UV warp modifier to use the copied armature
-                copied_armature = [o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'ARMATURE'][0]
-                mod.object_from = copied_armature
-                mod.object_to = copied_armature
-        
-        #check if this object had any atlas-able materials to begin with. If not, skip
-        if not [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('simple')]:
-            continue
-
-        for bake_type in bake_types:
-            #check for atlas dupes
-            atlas_image_name = f'{sanitizeMaterialName(obj.name).replace("001","")}_{bake_type}.png'
-            if bpy.data.images.get(atlas_image_name):
-                bpy.data.images.remove(bpy.data.images.get(atlas_image_name))
-            #the atlas image is originally named after the index of the object. Rename it to the object name
-            original_image_path = os.path.join(context.scene.kkbp.import_dir, 'atlas_files', f'{index}_{bake_type}.png')
-            new_image_path = os.path.join(context.scene.kkbp.import_dir, 'atlas_files', atlas_image_name)
-            if os.path.exists(original_image_path):
-                try:
-                    os.rename(original_image_path, new_image_path)
-                except:
-                    #rename failed because the file already exists. Delete the old one and try again
-                    os.remove(new_image_path)
-                    os.rename(original_image_path, new_image_path)
-            #then load it into blender
-            atlas_image = bpy.data.images.load(new_image_path)
-            bpy.data.images.remove(bpy.data.images.get(f'{index}_{bake_type}.png'))
-            for material in [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('simple')]:
-                image = material.node_tree.nodes['textures'].node_tree.nodes[bake_type].image
-                if image:
-                    if image.name == 'Template: Pattern Placeholder':
-                        image = None
-                if not image:
-                    print(image)
-                    continue
-                else:
-                    if not bpy.data.materials.get('{} Atlas'.format(material.name)):
-                        #remove the emission nodes from earlier
-                        if material.node_tree.nodes.get('Emission'):
-                            material.node_tree.nodes.remove(material.node_tree.nodes['Image Texture'])
-                            material.node_tree.nodes.remove(material.node_tree.nodes['Emission'])
-                        atlas_material = material.copy()
-                        atlas_material['simple'] = False
-                        atlas_material['atlas'] = True
-                        atlas_material.name = '{} Atlas'.format(material.name)
-                        new_group = atlas_material.node_tree.nodes['textures'].node_tree.copy()
-                        new_group.name = '{} Atlas'.format(material.name)
-                    else:
-                        atlas_material =  bpy.data.materials.get('{} Atlas'.format(material.name))
-                        new_group = bpy.data.node_groups.get('{} Atlas'.format(material.name))
-                    atlas_material.node_tree.nodes['textures'].node_tree = new_group
-                    new_group.nodes[bake_type].image = atlas_image
-                    #load in the light image to the dark slot to make it look better when only the light colors are baked.
-                    # This will be overwritten with the dark image in the next loop if the user baked it
-                    if bake_type == 'light':
-                        new_group.nodes['dark'].image = atlas_image
-
-        #replace all images with the atlas in a new atlas material
-        for mat_slot in [m for m in obj.material_slots if m.material.get('simple')]:
-            material = mat_slot.material
-            atlas_material = bpy.data.materials.get('{} Atlas'.format(material.name))
-            mat_slot.material = atlas_material
-
-    #setup the new collection for exporting
-    if bpy.app.version[0] > 3:
-        layer_collection = bpy.context.view_layer.layer_collection
-        layerColl = recurLayerCollection(layer_collection, c.get_name() + ' atlas')
-        bpy.context.view_layer.active_layer_collection = layerColl
-        bpy.ops.collection.exporter_add(name="IO_FH_fbx")
-        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.object_types = {'EMPTY', 'ARMATURE', 'MESH', 'OTHER'}
-        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.use_mesh_modifiers = False
-        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.add_leaf_bones = False
-        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.bake_anim = False
-        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.apply_scale_options = 'FBX_SCALE_ALL'
-        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.path_mode = 'COPY'
-        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.embed_textures = False
-        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.mesh_smooth_type = 'OFF'
-        bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.filepath = os.path.join(folderpath.replace('baked_files', 'atlas_files'), f'{sanitizeMaterialName(c.get_name())} exported model atlas.fbx')
-
-    #hide the new collection
-    c.show_layer_collection('Bone Widgets', True)
-    c.show_layer_collection('Rigged tongue ' + c.get_name(), True)
-    c.show_layer_collection('Rigged tongue ' + c.get_name() + '.001', True)
-    c.show_layer_collection('Bone Widgets.001', True)
-    c.show_layer_collection(c.get_name() + ' atlas', True)
-    remove_orphan_data()
+                if original := bpy.data.materials.get(slot.name.replace('Edit ', 'KK ')):
+                    slot.material = original
+                    original.node_tree.nodes[get_image_node(bake_type)].image = image
 
 class bake_materials(bpy.types.Operator):
     bl_idname = "kkbp.bakematerials"
@@ -553,10 +310,10 @@ class bake_materials(bpy.types.Operator):
             scene = context.scene.kkbp
             folderpath = os.path.join(context.scene.kkbp.import_dir, 'baked_files', '')
             last_step = time.time()
-            c.toggle_console()
+            # c.toggle_console()
             c.reset_timer()
             c.kklog('Switching to EEVEE for material baking...')
-            bpy.context.scene.render.engine = 'BLENDER_EEVEE_NEXT' if bpy.app.version[0] > 3 else 'BLENDER_EEVEE'
+            bpy.context.scene.render.engine = 'BLENDER_EEVEE_NEXT'
             c.switch(c.get_body(), 'OBJECT')
             c.set_viewport_shading('SOLID')
             
@@ -566,7 +323,7 @@ class bake_materials(bpy.types.Operator):
 
             for bake_object in c.get_all_bakeable_objects():
                 #do a quick check to make sure this object has any materials that can be baked
-                worth_baking = [m for m in bake_object.material_slots if m.material.get('bake')]
+                worth_baking = [m for m in bake_object.material_slots if m.material.get('edit')]
                 if not worth_baking:
                     c.kklog(f'Not finalizing object because there were no materials worth baking: {bake_object.name}')
                     continue
@@ -579,22 +336,16 @@ class bake_materials(bpy.types.Operator):
                 #hide all objects except this one
                 for obj in [o for o in bpy.context.view_layer.objects if o]:
                     obj.hide_render = True
-                #unhide the object to bake (but only if the old baking system is not used)
-                if not bpy.context.scene.kkbp.old_bake_bool:
-                    bake_object.hide_render = False
+                # #unhide the object to bake (but only if the old baking system is not used)
+                # if not bpy.context.scene.kkbp.old_bake_bool:
+                #     bake_object.hide_render = False
                 camera = setup_camera()
                 c.switch(bake_object)
                 setup_geometry_nodes_and_fillerplane(camera)
                 bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)                
 
                 #perform the baking operation
-                bake_types = []
-                if scene.bake_light_bool:
-                    bake_types.append('light')
-                if scene.bake_dark_bool:
-                    bake_types.append('dark')
-                if scene.bake_norm_bool:
-                    bake_types.append('normal')
+                bake_types = ['light', 'dark', 'normal']
                 for bake_type in bake_types:
                     bake_pass(folderpath, bake_type)
                 cleanup()
@@ -613,37 +364,37 @@ class bake_materials(bpy.types.Operator):
             for obj in bpy.context.view_layer.objects:
                 obj.hide_render = False
             
-            if scene.use_atlas:
-                create_material_atlas(folderpath)
+            # if scene.use_atlas:
+            #     create_material_atlas(folderpath)
             
-            #setup the original collection for exporting
-            # https://blender.stackexchange.com/questions/127403/change-active-collection
-            #Recursively transverse layer_collection for a particular name
-            def recurLayerCollection(layerColl, collName):
-                found = None
-                if (layerColl.name == collName):
-                    return layerColl
-                for layer in layerColl.children:
-                    found = recurLayerCollection(layer, collName)
-                    if found:
-                        return found
+            # #setup the original collection for exporting
+            # # https://blender.stackexchange.com/questions/127403/change-active-collection
+            # #Recursively transverse layer_collection for a particular name
+            # def recurLayerCollection(layerColl, collName):
+            #     found = None
+            #     if (layerColl.name == collName):
+            #         return layerColl
+            #     for layer in layerColl.children:
+            #         found = recurLayerCollection(layer, collName)
+            #         if found:
+            #             return found
 
-            layer_collection = bpy.context.view_layer.layer_collection
-            layerColl = recurLayerCollection(layer_collection, c.get_name())
-            bpy.context.view_layer.active_layer_collection = layerColl
-            if bpy.app.version[0] != 3:
-                if not bpy.data.collections[c.get_name()].exporters:
-                    bpy.ops.collection.exporter_add(name="IO_FH_fbx")
-                    bpy.data.collections[c.get_name()].exporters[0].export_properties.object_types = {'EMPTY', 'ARMATURE', 'MESH', 'OTHER'}
-                    bpy.data.collections[c.get_name()].exporters[0].export_properties.use_mesh_modifiers = False
-                    bpy.data.collections[c.get_name()].exporters[0].export_properties.add_leaf_bones = False
-                    bpy.data.collections[c.get_name()].exporters[0].export_properties.bake_anim = False
-                    bpy.data.collections[c.get_name()].exporters[0].export_properties.apply_scale_options = 'FBX_SCALE_ALL'
-                    bpy.data.collections[c.get_name()].exporters[0].export_properties.path_mode = 'COPY'
-                    bpy.data.collections[c.get_name()].exporters[0].export_properties.embed_textures = False
-                    bpy.data.collections[c.get_name()].exporters[0].export_properties.mesh_smooth_type = 'OFF'
-                    bpy.data.collections[c.get_name()].exporters[0].export_properties.filepath = os.path.join(folderpath.replace('baked_files', 'atlas_files'), f'{sanitizeMaterialName(c.get_name())} exported model.fbx')
-            c.toggle_console()
+            # layer_collection = bpy.context.view_layer.layer_collection
+            # layerColl = recurLayerCollection(layer_collection, c.get_name())
+            # bpy.context.view_layer.active_layer_collection = layerColl
+            # if bpy.app.version[0] != 3:
+            #     if not bpy.data.collections[c.get_name()].exporters:
+            #         bpy.ops.collection.exporter_add(name="IO_FH_fbx")
+            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.object_types = {'EMPTY', 'ARMATURE', 'MESH', 'OTHER'}
+            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.use_mesh_modifiers = False
+            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.add_leaf_bones = False
+            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.bake_anim = False
+            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.apply_scale_options = 'FBX_SCALE_ALL'
+            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.path_mode = 'COPY'
+            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.embed_textures = False
+            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.mesh_smooth_type = 'OFF'
+            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.filepath = os.path.join(folderpath.replace('baked_files', 'atlas_files'), f'{sanitizeMaterialName(c.get_name())} exported model.fbx')
+            # c.toggle_console()
 
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             c.set_viewport_shading('SOLID')

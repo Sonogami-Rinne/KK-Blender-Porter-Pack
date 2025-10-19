@@ -391,7 +391,7 @@ class EDIT_PT_panel(bpy.types.Panel):
             if mat.get('edit'):
                 split = layout.split(align=True, factor=0.5)
                 split.operator('kkbp.revertmaterial', text = 'Revert', icon='NODETREE')
-                split.operator('kkbp.savematerial', text = 'Save', icon='NODETREE')
+                split.operator('kkbp.bakematerials', text = 'Save', icon='NODETREE')
             elif mat.get('hair') or mat.get('outfit') or mat.get('body'):
                 layout.operator('kkbp.editmaterial', text = 'Edit material', icon='NODETREE')
 
