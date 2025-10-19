@@ -1853,7 +1853,6 @@ def main():
                 bone.use_connect = False #may otherwise cause Rigify generation failure if part of a finger chain
     
     bpy.ops.object.mode_set(mode='OBJECT')
-    
 
     '''Set up rigify UI'''
     

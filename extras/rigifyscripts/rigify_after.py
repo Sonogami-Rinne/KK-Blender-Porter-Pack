@@ -7,6 +7,7 @@ import sys
 import math
 from math import radians
 from . import commons as koikatsuCommons
+from ... import common as c
     
 def main():		   
     generatedRig = bpy.context.active_object
@@ -219,7 +220,7 @@ def main():
 
     generatedRig.data.edit_bones[koikatsuCommons.eyesTrackTargetParentBoneName].parent = None
     generatedRig.data.edit_bones[koikatsuCommons.headTrackTargetParentBoneName].parent = None
-    
+
     bpy.ops.object.mode_set(mode='OBJECT')
         
     bpy.context.object.pose.bones["root"].color.palette = 'CUSTOM'
@@ -238,7 +239,6 @@ def main():
     for layer in ['Torso', 'Arm.L IK', 'Arm.R IK', 'Leg.L IK', 'Leg.R IK', 'Root']:
         generatedRig.data.collections_all[layer].is_visible = True
 
-    #TODO: doesn't work
     #Take the IDs from all org bones and copy them over to the generated / helper bones
     for bone in generatedRig.data.bones:
         if bone.get('id') and bone.name.startswith('ORG-'):
@@ -260,6 +260,23 @@ def main():
                             if second_child := first_child[0].children:
                                 second_child[0]['id'] = bone['id']
 
+    #Finally, extract the accessory bones for different outfits to their own layers... 
+    #I won't put these in the Rigify UI, but they'll still be accessible in the bone collection section
+    clothes_and_hair = c.get_outfits()
+    clothes_and_hair.extend(c.get_hairs())
+    outfit_ids = (int(c['id']) for c in clothes_and_hair if c.get('id'))
+    outfit_ids = list(set(outfit_ids))
+    already_used = []
+    for id in outfit_ids:
+        if int(id) == min(outfit_ids):
+            continue
+        for bone in [bone for bone in generatedRig.data.bones if bone.name not in already_used]:
+            if new_layer := bone.get('id'):
+                if int(new_layer[0]) != min(outfit_ids):
+                    if koikatsuCommons.hairLayerName in bone.collections[0].name:
+                        koikatsuCommons.assignSingleBoneLayer(generatedRig, bone.name, bone.collections[0].name + f' {new_layer[0]}')
+                        already_used.append(bone.name)
+                        bone.collections[0].is_visible = False
 
 class rigify_after(bpy.types.Operator):
     bl_idname = "kkbp.rigafter"

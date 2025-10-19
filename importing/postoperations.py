@@ -228,15 +228,13 @@ class post_operations(bpy.types.Operator):
 
         #cleanup the generated rigify rig
         bpy.ops.kkbp.rigafter('INVOKE_DEFAULT')
-        #make sure the new bones on the generated rig retain the KKBP outfit id entry
-        rig = c.get_rig()
 
         #make sure everything is deselected in edit mode for the body
         c.switch(c.get_body(), 'edit')
         c.switch(c.get_body(), 'object')
 
         #then finally switch to the rig as the last selected object
-        c.switch(rig, 'object')
+        c.switch(c.get_rig(), 'object')
         bpy.context.scene.tool_settings.transform_pivot_point = 'INDIVIDUAL_ORIGINS'
         bpy.context.tool_settings.mesh_select_mode = (False, False, True) #enable face select in edit mode
         return {'FINISHED'}

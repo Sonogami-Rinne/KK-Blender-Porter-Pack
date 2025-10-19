@@ -10,18 +10,14 @@ class mat_comb_switch(bpy.types.Operator):
 
     def execute(self, context):
         #toggle textures for the combiner script
-        for obj in [o for o in bpy.data.collections[c.get_name() + '.001'].all_objects if not o.hide_get() and o.type == 'MESH']:
-            for mat in [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('simple')]:
+        for obj in [o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'MESH']:
+            for mat in [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('name')]:
                 nodes = mat.node_tree.nodes
-                #find the image node
-                image_node = None
-                for node in nodes:
-                    if node.type == 'TEX_IMAGE':
-                        image_node = node
-                if image_node:
-                    #toggle light / dark state
-                    image_node.image = nodes['textures'].node_tree.nodes['dark' if image_node.image == nodes['textures'].node_tree.nodes['light'].image else 'light'].image
-            context.view_layer.objects.active = obj
-            bpy.ops.object.material_slot_remove_unused()
+                if not nodes.get('_light.png'):
+                    continue
+                if nodes['Image Texture'].image.name.endswith('_light.png'):
+                    nodes['Image Texture'].image = bpy.data.images[nodes['Image Texture'].image.name.replace('_light.png', '_dark.png')]
+                else:
+                    nodes['Image Texture'].image = bpy.data.images[nodes['Image Texture'].image.name.replace('_dark.png', '_light.png')]
 
         return {'FINISHED'}

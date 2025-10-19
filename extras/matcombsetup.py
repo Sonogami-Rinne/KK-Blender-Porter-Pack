@@ -1,4 +1,4 @@
-import bpy
+import bpy, os
 from ..interface.dictionary_en import t
 from .. import common as c
 
@@ -9,6 +9,12 @@ class mat_comb_setup(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
+        '''Merges all the finalized material png files into a single atlas file, copies the current model and applies the atlas to the copy'''
+
+        folderpath = os.path.join(bpy.context.scene.kkbp.import_dir, 'baked_files', '')
+
+        # https://blender.stackexchange.com/questions/127403/change-active-collection
+        #Recursivly transverse layer_collection for a particular name
         def recurLayerCollection(layerColl, collName):
             found = None
             if (layerColl.name == collName):
@@ -26,7 +32,7 @@ class mat_comb_setup(bpy.types.Operator):
                     if bpy.data.materials.get(simplified_name):
                         simplified_mat = bpy.data.materials[simplified_name]
                         for bake_type in ['light', 'dark', 'normal']:
-                            simplified_mat.node_tree.nodes['textures'].node_tree.nodes[bake_type].image = bpy.data.images.get(simplified_name + ' ' + bake_type + '.png')
+                            simplified_mat.node_tree.nodes[bake_type].image = bpy.data.images.get(simplified_name + ' ' + bake_type + '.png')
             #delete orphan data
             for cat in [bpy.data.armatures, bpy.data.objects, bpy.data.meshes, bpy.data.materials, bpy.data.images, bpy.data.node_groups]:
                 for block in cat:
@@ -34,7 +40,7 @@ class mat_comb_setup(bpy.types.Operator):
                         cat.remove(block)
 
         if bpy.data.collections.get(c.get_name() + ' atlas'):
-            c.kklog('deleting previous collection "Model with atlas" and regenerating atlas model...')
+            c.kklog(f'deleting previous collection "{c.get_name()} atlas" and regenerating atlas model...')
             def del_collection(coll):
                 for c in coll.children:
                     del_collection(c)
@@ -42,12 +48,9 @@ class mat_comb_setup(bpy.types.Operator):
             del_collection(bpy.data.collections[c.get_name() + ' atlas'])
             remove_orphan_data()
             #show the original collection again
-            layer_collection = bpy.context.view_layer.layer_collection
-            layerColl = recurLayerCollection(layer_collection, 'Scene Collection')
-            bpy.context.view_layer.active_layer_collection = layerColl
-            bpy.context.scene.view_layers[0].active_layer_collection.children[0].exclude = False
+            c.show_layer_collection(c.get_name(), False)
 
-        #Change the Active LayerCollection to 'My Collection'
+        #Change the Active LayerCollection to the character collection
         layer_collection = bpy.context.view_layer.layer_collection
         layerColl = recurLayerCollection(layer_collection, c.get_name())
         bpy.context.view_layer.active_layer_collection = layerColl
@@ -64,51 +67,43 @@ class mat_comb_setup(bpy.types.Operator):
         def copy(parent, collection, linked=False):
             dupe_lut = defaultdict(lambda : None)
             def _copy(parent, collection, linked=False):
-                if collection.name == 'Bone Widgets':
-                    return
                 cc = bpy.data.collections.new(collection.name)
                 copy_objects(collection, cc, linked, dupe_lut)
                 for c in collection.children:
                     _copy(cc, c, linked)
                 parent.children.link(cc)
-            _copy(parent, collection, linked)
+                return cc
+            the_copy = _copy(parent, collection, linked)
             for o, dupe in tuple(dupe_lut.items()):
                 parent = dupe_lut[o.parent]
                 if parent:
                     dupe.parent = parent
-
+            return the_copy
         context = bpy.context
         scene = context.scene
         col = context.collection
         assert(col is not scene.collection)
-        copy(scene.collection, col)
+        copied_collection = copy(scene.collection, col)
+        copied_collection.name = c.get_name() + ' atlas'
 
         #setup materials for the combiner script
-        for obj in [o for o in bpy.data.collections[c.get_name() + '.001'].all_objects if not o.hide_get() and o.type == 'MESH']:
-            for mat in [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('simple')]:
+        for obj in [o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'MESH']:
+            for mat in [mat_slot.material for mat_slot in obj.material_slots if mat_slot.material.get('name')]:
                 nodes = mat.node_tree.nodes
+                if not nodes.get('_light.png'):
+                    continue
+                print(mat)
                 links = mat.node_tree.links
-                emissive_node = nodes.new('ShaderNodeEmission')
+                for input in nodes['shader'].inputs:
+                    if input.links:
+                        links.remove(input.links[0])
+                emissive_node = nodes.new('ShaderNodeBsdfPrincipled')
+                emissive_node.name = 'Principled BSDF'
                 image_node = nodes.new('ShaderNodeTexImage')
+                image_node.name = 'Image Texture'
                 links.new(emissive_node.inputs[0], image_node.outputs[0])
-                image_node.image = nodes['textures'].node_tree.nodes['light'].image
+                image_node.image = nodes['_light.png'].image
             context.view_layer.objects.active = obj
             bpy.ops.object.material_slot_remove_unused()
-
-            #update the modifiers
-            for mod in obj.modifiers:
-                if mod.type == 'ARMATURE':
-                    #fix the armature modifier to use the copied aramture
-                    copied_armature = [o for o in bpy.data.collections[c.get_name() + '.001'].all_objects if o.type == 'ARMATURE'][0]
-                    mod.object = copied_armature
-                elif mod.type == 'SOLIDIFY':
-                    #disable the outline on the atlased object because I don't feel like fixing it
-                    obj.modifiers['Outline Modifier'].show_render = False
-                    obj.modifiers['Outline Modifier'].show_viewport = False
-                elif mod.type == 'UV_WARP':
-                    #fix the UV warp modifier to use the copied armature
-                    copied_armature = [o for o in bpy.data.collections[c.get_name() + '.001'].all_objects if o.type == 'ARMATURE'][0]
-                    mod.object_from = copied_armature
-                    mod.object_to = copied_armature
 
         return {'FINISHED'}
