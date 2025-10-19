@@ -196,6 +196,7 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         
         row = col.row(align=True)
         row.operator('kkbp.kkbpimport', text = t('import_model'), icon='FILE_FOLDER')
+        row.enabled = context.scene.kkbp.import_dir == ''
                     
         row = col.row(align = True)
         box = row.box()
@@ -203,16 +204,20 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         
         row = col.row(align=True)
         row.prop(context.scene.kkbp, "shader_dropdown")
+        row.enabled = context.scene.kkbp.import_dir == ''
 
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "categorize_dropdown")
         split.prop(context.scene.kkbp, "armature_dropdown")
+        row.enabled = context.scene.kkbp.import_dir == ''
         
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
         split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = t('seams'))
         split.prop(context.scene.kkbp, "sfw_mode", toggle=True, text = t('sfw_mode'))
+        row.enabled = context.scene.kkbp.import_dir == ''
+
         
 class EXPORTING_PT_panel(bpy.types.Panel):
     bl_parent_id = "IMPORTING_PT_panel"
@@ -231,11 +236,15 @@ class EXPORTING_PT_panel(bpy.types.Panel):
 
         col = box.column(align=True)
         row = col.row(align=True)
-        row.operator('kkbp.exportprep', text = t('prep'), icon = 'MODIFIER')
+        row.operator('kkbp.exportprep', 
+                     text = t('prep') if context.scene.kkbp.armature_dropdown == 'FK' else 'Import with the FK armature to use Export features!', 
+                    icon = 'MODIFIER' if context.scene.kkbp.armature_dropdown == 'FK' else 'WARNING_LARGE')
+        row.enabled = context.scene.kkbp.import_dir != '' and context.scene.kkbp.armature_dropdown == 'FK'
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.prop(context.scene.kkbp, "simp_dropdown")
         split.prop(context.scene.kkbp, "prep_dropdown")
+        row.enabled = context.scene.kkbp.import_dir != '' and context.scene.kkbp.armature_dropdown == 'FK'
         row = col.row(align=True)
         split = row.split(align=True, factor=0.33)
         if globs.pil_exist == 'no':
@@ -248,6 +257,7 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         else:
             row.prop(context.scene.kkbp, "use_atlas", toggle=True, text = t('use_atlas') if scene.use_atlas else t('dont_use_atlas'))
             # split.operator('kkbp.resetmaterials', text = t('reset_mats'), icon='RECOVER_LAST')
+        row.enabled = context.scene.kkbp.import_dir != '' and context.scene.kkbp.armature_dropdown == 'FK'
 
 class EXTRAS_PT_panel(bpy.types.Panel):
     bl_label = t('extras')
@@ -285,20 +295,24 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text = t('single_animation'))
         split.operator('kkbp.importanimation', text = '', icon = 'ARMATURE_DATA')
+        row.enabled = context.scene.kkbp.armature_dropdown == 'Rigify' and context.scene.kkbp.import_dir != ''
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="")
         split.prop(context.scene.kkbp, "animation_import_type", toggle=True, text = t('animation_mix') if scene.animation_import_type else t('animation_koi'))
+        row.enabled = context.scene.kkbp.armature_dropdown == 'Rigify' and context.scene.kkbp.import_dir != ''
 
         col = box.column(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('animation_library'))
         split.operator('kkbp.createanimassetlib', text = '', icon = 'ARMATURE_DATA')
+        row.enabled = context.scene.kkbp.armature_dropdown == 'Rigify' and context.scene.kkbp.import_dir != ''
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text="")
         split.prop(context.scene.kkbp, "animation_library_scale", toggle=True, text = t('animation_library_scale'))
+        row.enabled = context.scene.kkbp.armature_dropdown == 'Rigify' and context.scene.kkbp.import_dir != ''
 
         # col = box.column(align=True)
         # row = col.row(align=True)
@@ -312,6 +326,7 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('sep_eye'))
         split.operator('kkbp.linkshapekeys', text = '', icon='HIDE_OFF')
+        row.enabled = context.scene.kkbp.import_dir != ''
 
         # col = box.column(align=True)
         # row = col.row(align=True)
@@ -325,6 +340,7 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('rigify_convert'))
         split.operator('kkbp.rigifyconvert', text = '', icon='MOD_ARMATURE')
+        row.enabled = context.scene.kkbp.armature_dropdown == 'FK' and context.scene.kkbp.import_dir != ''
 
         box = layout.box()
         col = box.column(align=True)
@@ -332,10 +348,12 @@ class EXTRAS_PT_panel(bpy.types.Panel):
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('matcomb'))
         split.operator('kkbp.matcombsetup', text = '', icon='NODETREE')
+        row.enabled = context.scene.kkbp.import_dir != ''
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.label(text=t('mat_comb_switch'))
         split.operator('kkbp.matcombswitch', text = '', icon='FILE_REFRESH')
+        row.enabled = context.scene.kkbp.import_dir != ''
         
         #check https://ui.blender.org/icons/ for all icon names
 
