@@ -9,7 +9,7 @@ def main(file):
         kkbp_character = True
     c.toggle_console() #open console for some kind of progression
     start = time.time()
-    rigify_armature = bpy.data.objects['RIG-Armature']
+    rigify_armature = c.get_rig()
     bpy.context.view_layer.objects.active=rigify_armature
     bpy.ops.object.mode_set(mode = 'OBJECT')
     bpy.ops.rsl.clear_custom_bones()
@@ -59,7 +59,7 @@ def main(file):
                 if row.bone_name_source.lower() == data['bones'][bone][0].lower():
                     row.bone_name_target = data['bones'][bone][1]
     bpy.ops.rsl.retarget_animation()
-
+    
     # then remove the fcurves of the retargeted bones that were not present in the retargeting list.
     # A lot of popping and fluctuation is present if these aren't removed
     retargeting_list = [
@@ -135,14 +135,14 @@ def main(file):
     ]
     if kkbp_character:
         for index, action in enumerate(rigify_armature.animation_data.action.fcurves):
-            bone_name = action.data_path[action.data_path.find('[')+2:action.data_path.find('].')-1]
-            print('{}  {} / {}'.format(action.data_path, index, len(rigify_armature.animation_data.action.fcurves)))
-            if bone_name not in retargeting_list:
-                rigify_armature.animation_data.action.fcurves.remove(action) #remove keyframes
-                if rigify_armature.pose.bones.get(bone_name):
-                    rigify_armature.pose.bones[bone_name].matrix_basis = mathutils.Matrix() #reset rotation matrix
+            if action:
+                bone_name = action.data_path[action.data_path.find('[')+2:action.data_path.find('].')-1]
+                print('{}  {} / {}'.format(action.data_path, index, len(rigify_armature.animation_data.action.fcurves)))
+                if bone_name not in retargeting_list:
+                    rigify_armature.animation_data.action.fcurves.remove(action) #remove keyframes
+                    if rigify_armature.pose.bones.get(bone_name):
+                        rigify_armature.pose.bones[bone_name].matrix_basis = mathutils.Matrix() #reset rotation matrix
 
-        
     if bpy.context.scene.kkbp.animation_library_scale:
         #also scale the arms on the y axis by 5% because it makes the animation more accurate to the in-game one for some poses
         already_got_both_arms = False
