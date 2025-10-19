@@ -273,6 +273,8 @@ class modify_material(bpy.types.Operator):
             meshes.append(('hair', hair))
         for outfit in c.get_outfits():
             meshes.append(('outfit', outfit))
+        for alt in c.get_alts():
+            meshes.append(('outfit', alt))
 
         for mesh_type, mesh in meshes:
             if mesh is None:
