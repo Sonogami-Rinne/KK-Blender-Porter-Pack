@@ -33,7 +33,6 @@ class modify_material(bpy.types.Operator):
     def execute(self, context):
         try:
             is_svs = c.is_svs()
-            self.export_light_dark_material = is_svs or c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json').get('exportLightDarkTexture')
 
             self.load_materials()
             self.remove_unused_material_slots()
@@ -42,9 +41,9 @@ class modify_material(bpy.types.Operator):
             self.load_images()
             self.replace_materials_and_link_textures_adjust_UV()
             self.SVS_set_body_alpha_mask()
-            self.change_body_render_method()
 
             if not is_svs:
+                self.change_body_render_method()
                 self.replace_materials_for_tears_tongue_gageye()
 
             self.link_textures_for_tongue_tear_gag()

@@ -250,7 +250,7 @@ def get_material_names(smr_name: str) -> list[str] | None:
 
 def get_shader_name(material_name: str) -> str:
     '''Returns the shader name for this material'''
-    material_data = json_file_manager.get_json_file('KK_MaterialDataComplete.json')
+    material_data = json_file_manager.get_json_file(f'{get_prefix()}_MaterialDataComplete.json')
     material_infos = [m['MaterialInformation'] for m in material_data if m.get('MaterialInformation')]
     shaders = []
     for material_info in material_infos:
