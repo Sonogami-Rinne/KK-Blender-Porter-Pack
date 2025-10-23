@@ -20,9 +20,9 @@ class KKBPPreferences(bpy.types.AddonPreferences):
     description=t('seams_tt'),
     default = True)
     
-    use_single_outline : BoolProperty(
+    use_outline : BoolProperty(
     description= t('outline_tt'),
-    default = False)
+    default = True)
     
     # use_material_fake_user : BoolProperty(
     # description=t('keep_templates_tt'),
@@ -146,7 +146,7 @@ class KKBPPreferences(bpy.types.AddonPreferences):
 
         row = col.row(align=True)
         split = row.split(align = True, factor=splitfac)
-        split.prop(self, "use_single_outline", toggle=True, text = t('outline'))
+        split.prop(self, "use_outline", toggle=True, text = t('outline'))
         split.prop(self, "sfw_mode", toggle=True, text = t('sfw_mode'))
         
         col = layout.column(align=True)

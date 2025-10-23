@@ -31,6 +31,7 @@ class post_operations(bpy.types.Operator):
             self.apply_rigify()
             self.apply_sfw()
             self.separate_meshes()
+            self.apply_outlines()
             
             c.switch(c.get_armature(), 'object')
             c.clean_orphaned_data()
@@ -207,6 +208,11 @@ class post_operations(bpy.types.Operator):
     def apply_rigify(cls):
         self = cls
 
+        #SVS is not supported yet
+        if c.is_svs():
+            c.kklog('Rigify conversion skipped for SVS characters.')
+            return
+
         if not bpy.context.scene.kkbp.armature_dropdown == 'Rigify':
             return
         
@@ -354,3 +360,105 @@ class post_operations(bpy.types.Operator):
                 except:
                     #oh well
                     pass
+
+    def apply_outlines(self):
+        if not bpy.context.scene.kkbp.use_outline:
+            return
+        c.kklog('Adding outlines to character...')
+        self.add_outlines_to_body()
+        self.add_outlines_to_hair_clothes()
+
+    def add_outlines_to_body(self):
+        #Add face and body outlines, then load in the clothes transparency mask to body outline
+        body = c.get_body()
+        c.switch(body, 'object')
+        mod = body.modifiers.new(type='SOLIDIFY', name='Outline Modifier')
+        mod.thickness = 0.0005
+        mod.offset = 0
+        mod.material_offset = len(body.material_slots)
+        mod.use_flip_normals = True
+        mod.use_rim = False
+        mod.name = 'Outline Modifier'
+        mod.show_expanded = False
+        #face first
+        try:
+            faceOutlineMat = bpy.data.materials['KK cf_m_face_00'].copy()
+        except:
+            c.kklog('Could not find face material to create outline from.', 'error')
+            return
+        faceOutlineMat.name = 'Outline cf_m_face_00'
+        body.data.materials.append(faceOutlineMat)
+        faceOutlineMat.use_backface_culling = True
+        faceOutlineMat.node_tree.nodes['_light.png'].image = bpy.data.images['Template: BlackWithAlpha']
+        body_outline_mat = bpy.data.materials['KK cf_m_body'].copy()
+        body_outline_mat.name = 'Outline cf_m_body'
+        body.data.materials.append(body_outline_mat)
+        body_outline_mat.use_backface_culling = True
+        body_outline_mat.node_tree.nodes['_light.png'].image = bpy.data.images['Template: BlackWithAlpha']
+        c.print_timer('add_outlines_to_body')
+
+    def add_outlines_to_hair_clothes(self):
+        #Give each piece of hair/clothes with an alphamask on each object it's own outline group
+        objects = c.get_hairs()
+        objects.extend(c.get_outfits())
+        objects.extend(c.get_alts())
+
+        for ob in objects:
+            #Get the length of the material list before starting
+            outlineStart = len(ob.material_slots)
+            #link all polygons to material name
+            mats_to_gons = {}
+            for slot in ob.material_slots:
+                mats_to_gons[slot.material.name] = []
+            for gon in ob.data.polygons:
+                    mats_to_gons[ob.material_slots[gon.material_index].material.name].append(gon)
+            #find all materials that use an alpha mask or maintex
+            alpha_users = []
+            for mat in ob.material_slots:
+                AlphaImage = mat.material.node_tree.nodes['_AM.png'].image    if mat.material.node_tree.nodes['_AM.png'].image.name    != 'Template: Placeholder' else None
+                MainImage =  mat.material.node_tree.nodes['_light.png'].image if mat.material.node_tree.nodes['_light.png'].image.name != 'Template: Placeholder' else None
+                if AlphaImage or MainImage:
+                    alpha_users.append(mat.material.name)
+            #reorder material_list to place alpha/maintex users first
+            new_mat_list_order = [mat_slot.material.name for mat_slot in ob.material_slots if mat_slot.material.name not in alpha_users]
+            new_mat_list_order = alpha_users + new_mat_list_order
+            #reorder mat slot list
+            for index, mat_slot in enumerate(ob.material_slots):
+                mat_slot.material = bpy.data.materials[new_mat_list_order[index]]
+            #create slots for new alpha user outlines
+            for index, mat in enumerate(alpha_users):
+                ob.data.materials.append(None)
+                OutlineMat = bpy.data.materials[mat].copy()
+                OutlineMat.name = bpy.data.materials[mat].name.replace('KK ', 'Outline ')
+                OutlineMat.use_backface_culling = True
+                OutlineMat.node_tree.nodes['_light.png'].image = bpy.data.images['Template: BlackWithAlpha']
+                ob.material_slots[index + outlineStart].material = OutlineMat
+            #if the outline material is for a glasses material, disable it
+                if bpy.data.materials[mat].get('glasses'):
+                    nodes = OutlineMat.node_tree.nodes
+                    links = OutlineMat.node_tree.links
+                    links.remove(nodes['combine'].inputs['Light image alpha'].links[0])
+            #update polygon material indexes
+            for mat in mats_to_gons:
+                for gon in mats_to_gons[mat]:
+                    gon.material_index = new_mat_list_order.index(mat)
+
+        #Add a general outline that covers the rest of the materials on the object that don't need transparency
+        for ob in objects:
+            bpy.context.view_layer.objects.active = ob
+            mod = ob.modifiers.new(
+                type='SOLIDIFY',
+                name='Outline Modifier')
+            mod.thickness = 0.0005
+            mod.offset = 1
+            mod.material_offset = outlineStart
+            mod.use_flip_normals = True
+            mod.use_rim = False
+            mod.show_expanded = False
+            finalOutlineMat = ob.material_slots[0].material.copy()
+            finalOutlineMat.use_backface_culling = True
+            finalOutlineMat.node_tree.nodes['_light.png'].image = bpy.data.images['Template: BlackWithAlpha']
+            finalOutlineMat.node_tree.nodes['_AM.png'].image = bpy.data.images['Template: Placeholder']
+            finalOutlineMat.name = 'Outline ' + ob.name
+            ob.data.materials.append(finalOutlineMat)
+        c.print_timer('add_outlines_to_hair_clothes')

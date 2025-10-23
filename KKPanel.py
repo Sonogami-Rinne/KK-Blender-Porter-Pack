@@ -40,9 +40,9 @@ class PlaceholderProperties(PropertyGroup):
     description=t('seams_tt'),
     default = bpy.context.preferences.addons[__package__].preferences.fix_seams)
     
-    use_single_outline : BoolProperty(
+    use_outline : BoolProperty(
     description= t('outline_tt'),
-    default = bpy.context.preferences.addons[__package__].preferences.use_single_outline)
+    default = bpy.context.preferences.addons[__package__].preferences.use_outline)
     
     # use_material_fake_user : BoolProperty(
     # description=t('keep_templates_tt'),
@@ -203,7 +203,9 @@ class IMPORTING_PT_panel(bpy.types.Panel):
         col = box.column(align=True)
         
         row = col.row(align=True)
-        row.prop(context.scene.kkbp, "shader_dropdown")
+        split = row.split(align = True, factor=splitfac)
+        split.prop(context.scene.kkbp, "use_outline", toggle=True, text = 'Use outlines?')
+        split.prop(context.scene.kkbp, "shader_dropdown")
         row.enabled = context.scene.kkbp.import_dir == ''
 
         row = col.row(align=True)
