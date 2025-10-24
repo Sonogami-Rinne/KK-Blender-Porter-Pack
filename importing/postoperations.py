@@ -362,7 +362,7 @@ class post_operations(bpy.types.Operator):
                     pass
 
     def apply_outlines(self):
-        if not bpy.context.scene.kkbp.use_outline:
+        if not bpy.context.scene.kkbp.use_outline or c.is_svs():
             return
         c.kklog('Adding outlines to character...')
         self.add_outlines_to_body()
