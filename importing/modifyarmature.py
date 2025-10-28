@@ -514,6 +514,9 @@ class modify_armature(bpy.types.Operator):
         #extract core bones
         for bone in self.core_bones:
             self.set_armature_layer(bone, layer_name = 'Torso')
+        #extract more core bones
+        for bone in self.spine_bones:
+            self.set_armature_layer(bone, layer_name = 'Torso')
         #extract left arm bones 
         for bone in self.arm_bones_left:
             self.set_armature_layer(bone, layer_name = 'Arm.L FK')

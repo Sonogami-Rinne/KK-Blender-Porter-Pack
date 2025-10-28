@@ -240,25 +240,22 @@ class EXPORTING_PT_panel(bpy.types.Panel):
         row = col.row(align=True)
         row.operator('kkbp.exportprep', 
                      text = t('prep') if context.scene.kkbp.armature_dropdown == 'FK' else 'Import with the FK armature to use Export features!', 
-                    icon = 'MODIFIER' if context.scene.kkbp.armature_dropdown == 'FK' else 'WARNING_LARGE')
-        row.enabled = context.scene.kkbp.import_dir != '' and context.scene.kkbp.armature_dropdown == 'FK'
+                    icon = 'MODIFIER' if context.scene.kkbp.armature_dropdown == 'FK' or bpy.app.version[0:2] == (4,2) else 'WARNING_LARGE')
+        row.enabled = context.scene.kkbp.import_dir != '' and context.scene.kkbp.armature_dropdown == 'FK' and globs.pil_exist != 'restart'
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
         split.prop(context.scene.kkbp, "simp_dropdown")
         split.prop(context.scene.kkbp, "prep_dropdown")
-        row.enabled = context.scene.kkbp.import_dir != '' and context.scene.kkbp.armature_dropdown == 'FK'
+        row.enabled = context.scene.kkbp.import_dir != '' and context.scene.kkbp.armature_dropdown == 'FK' and globs.pil_exist != 'restart'
         row = col.row(align=True)
-        split = row.split(align=True, factor=0.33)
         if globs.pil_exist == 'no':
-            split.operator('kkbp.get_pillow', text = t('pillow'), icon='FILE_REFRESH')
-            # split.operator('kkbp.resetmaterials', text = t('reset_mats'), icon='RECOVER_LAST')
+            row.operator('kkbp.get_pillow', text = t('pillow'), icon='FILE_REFRESH')
         elif globs.pil_exist == 'restart':
             col = col.box().column()
             col.label(text='Installation complete')
             col.label(text='Please restart Blender')
         else:
             row.prop(context.scene.kkbp, "use_atlas", toggle=True, text = t('use_atlas') if scene.use_atlas else t('dont_use_atlas'))
-            # split.operator('kkbp.resetmaterials', text = t('reset_mats'), icon='RECOVER_LAST')
         row.enabled = context.scene.kkbp.import_dir != '' and context.scene.kkbp.armature_dropdown == 'FK'
 
 class EXTRAS_PT_panel(bpy.types.Panel):
