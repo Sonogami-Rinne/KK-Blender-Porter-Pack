@@ -439,13 +439,14 @@ class post_operations(bpy.types.Operator):
                 OutlineMat.name = bpy.data.materials[mat].name.replace('KK ', 'Outline ')
                 OutlineMat.use_backface_culling = True
                 OutlineMat.use_backface_culling_shadow = True
-                OutlineMat.node_tree.nodes['_light.png'].image = bpy.data.images['Template: BlackWithAlpha']
+                links = OutlineMat.node_tree.links
+                links.remove(nodes['_light.png'].outputs[0].links[0])
                 ob.material_slots[index + outlineStart].material = OutlineMat
             #if the outline material is for a glasses material, disable it
                 if bpy.data.materials[mat].get('glasses'):
                     nodes = OutlineMat.node_tree.nodes
                     links = OutlineMat.node_tree.links
-                    links.remove(nodes['combine'].inputs['Light image alpha'].links[0])
+                    links.remove(nodes['shader'].inputs['Light image alpha'].links[0])
             #update polygon material indexes
             for mat in mats_to_gons:
                 for gon in mats_to_gons[mat]:

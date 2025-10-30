@@ -528,6 +528,8 @@ def duplicateShapeKey(objectName, shapeKeyName, shapeKeyCopyName):
 
 def isVertexGroupEmpty(vertexGroupName, objectName):
     object = bpy.data.objects[objectName]
+    if not object.vertex_groups.get(vertexGroupName):
+        return True
     vertexGroup = object.vertex_groups[vertexGroupName]
     return not any(vertexGroup.index in [g.group for g in v.groups] for v in object.data.vertices)
                 
@@ -1226,6 +1228,8 @@ def getDeformBoneNames(rig):
 
 def getRelatedBoneNames(rig, boneName):
     relatedBoneNames = []
+    if not rig.pose.bones.get(boneName):
+        return []
     bone = rig.pose.bones[boneName]                          
     if bone.parent and bone.parent.name not in relatedBoneNames and rig.pose.bones.get(bone.parent.name):
         relatedBoneNames.append(bone.parent.name)

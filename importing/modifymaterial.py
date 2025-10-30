@@ -311,6 +311,7 @@ class modify_material(bpy.types.Operator):
                 if c.get_shader_name(material['id']) in shaders:
                     c.kklog('Detected glasses shader. Setting render method to blended: {}'.format(material['id']))
                     material.surface_render_method = 'BLENDED'
+                    material['glasses'] = True
 
                 #special exception to clip the emblem image because I am tired of seeing it repeat at the edges
                 if 'KK cf_m_emblem ' in material.name:
@@ -365,7 +366,8 @@ class modify_material(bpy.types.Operator):
 
         for mat in mats:
             material = bpy.data.materials.get(f'{prefix} ' + mat)
-            material.surface_render_method = 'BLENDED'
+            if material:
+                material.surface_render_method = 'BLENDED'
             # material.use_transparency_overlap = False
         
         #move the eyeline down material slot up so it doesn't appear over the eyeline up
