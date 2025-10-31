@@ -76,7 +76,7 @@ class kkbp_import(bpy.types.Operator):
         if not c.is_svs():
             force_current_pose = c.json_file_manager.get_json_file('KK_KKBPExporterConfig.json')['exportCurrentPose']
             if force_current_pose:
-                bpy.context.scene.kkbp.armature_dropdown = 'FK'
+                bpy.context.scene.kkbp.use_rigify = False
 
         functions = [
                 lambda:bpy.ops.kkbp.modifymesh('INVOKE_DEFAULT'),
@@ -92,7 +92,6 @@ class kkbp_import(bpy.types.Operator):
             print('Import function {} running'.format(index))
             function()
         c.toggle_console()
-        bpy.context.scene.kkbp.plugin_state = 'imported'
         c.kklog('KKBP import finished in {} minutes'.format(round(((datetime.datetime.now().minute * 60 + datetime.datetime.now().second + datetime.datetime.now().microsecond / 1e6) - bpy.context.scene.kkbp.total_timer) / 60, 2)))
         return {'FINISHED'}
         

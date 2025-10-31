@@ -14,7 +14,7 @@ class rigify_convert(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            bpy.context.scene.kkbp.armature_dropdown = 'Rigify'
+            bpy.context.scene.kkbp.use_rigify = True
             post_operations.apply_rigify()
             return {'FINISHED'}
         except:

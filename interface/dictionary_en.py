@@ -7,8 +7,6 @@ translation_dictionary = {
     'seams'     : "Fix body seams",
     'seams_tt'  : 'This performs a "Merge by Distance" operation on the body materials. Removing doubles screws with the weights around certain areas. Disabling this will preserve the weights, but may cause seams to appear around the neck and down the chest when the outline modifier is on',
     
-    'outline'     : 'Use single outline',
-    'outline_tt'  : "Enable to use one generic outline material as opposed to using several unique ones. Checking this may cause outline transparency issues",
     
     'keep_templates'        : "Keep material templates",
     'keep_templates_tt'     : "Keep enabled to set the KKBP material templates to fake user. This will keep them from being deleted when blender is closed. Useful if you want to apply them to other objects after your character is finished",
@@ -16,27 +14,15 @@ translation_dictionary = {
     'sfw_mode'          : 'SFW mode',
     'sfw_mode_tt'       : 'Attempts to cover up some NSFW things',
 
-    'arm_drop'          : "Armature type",
-    'arm_drop_A'        : "Use Rigify Armature",
-    'arm_drop_A_tt'     : "Use the Rigify armature. This is an advanced armature suitable for use in Blender",
-    'arm_drop_B'        : "Use FK Armature",
-    'arm_drop_B_tt'     : "Use an FK only armature. This armature is easier to use and better suited for exporting the model out of Blender",
-    # 'arm_drop_C'        : "Use Koikatsu Armature",
-    # 'arm_drop_C_tt'     : "Use the stock Koikatsu armature. This will match the bone naming and structure of the one in-game",
-    # 'arm_drop_D'        : "Use PMX Armature",
-    # 'arm_drop_D_tt'     : "Use the stock PMX armature. This is the armature you get from the KKBP exporter",
+    'use_rigify'        : "Use Rigify Armature",
+    'no_rigify'         : "Use FK Armature",
+    'use_rigify_tt'     : "Choose between the Rigify armature and an FK armature. The Rigify armature is an advanced armature suitable for use in Blender. The FK armature is easier to use and better suited for exporting the model out of Blender",
 
-    'cat_drop'      : 'Run type',
-    'cat_drop_A'    : "One object per outfit",
+    'cat_drop'      : 'Separation type',
+    'no_separate'    : "One object per outfit",
     'cat_drop_A_tt' : "Import everything and get a single object containing all your model's clothes. Hides any alternate clothes by default",
-    'cat_drop_B'    : "Separate all clothing",
+    'separate'    : "Separate all clothing",
     'cat_drop_B_tt' : "Import everything and automatically separate every single piece of clothing into several objects",
-
-    # 'dark'      : "Dark colors",
-    # 'dark_C'    : "Do not use dark colors",
-    # 'dark_C_tt' : "Makes the dark colors the same as the light colors",
-    # 'dark_F'    : 'Automatic dark colors',
-    # 'dark_F_tt' : "Uses an automatic method to set the dark colors",
 
     'prep_drop'         : 'Export type',
     'prep_drop_A'       : 'Unity - VRM compatible',
@@ -56,25 +42,6 @@ translation_dictionary = {
     'simp_drop_C'   : 'No changes (FAST)',
     'simp_drop_C_tt': 'Does not simplify anything',
 
-    # 'bake'          : 'Finalize materials',
-    # 'bake_light'    : "Light",
-    # 'bake_light_tt' : "Finalize light version of all textures",
-    # 'bake_dark'     : "Dark",
-    # 'bake_dark_tt'  : "Finalize dark version of all textures",
-    # 'bake_norm'     : "Normal",
-    # 'bake_norm_tt'  : "Finalize normal version of all textures",
-    # 'bake_mult'     : 'Finalize multiplier',
-    # 'bake_mult_tt'  : "Set this to 2 or 3 if the finalized texture is blurry",
-    # 'old_bake'      : 'Use V4 baker',
-    # 'old_bake_tt'   : 'Enable to use the old finalization system. This system will not bake any extra UV maps like hair shine or eyeshadow, but it may help if you are encountering corruption in the finalized images',
-
-    # 'shape_A'       : 'Use KKBP shapekeys',
-    # 'shape_A_tt'    : 'Rename and delete the old shapekeys. This will merge the shapekeys that are part of the same expression and delete the rest',
-    # 'shape_B'       : "Save partial shapekeys",
-    # 'shape_B_tt'    : "Save the partial shapekeys that are used to generate the KK shapekeys. These are useless on their own",
-    # 'shape_C'       : "Skip modifying shapekeys",
-    # 'shape_C_tt'    : "Use the stock Koikatsu shapekeys. This will not change the shapekeys in any way",
-
     'shader_A'       : 'Use Eevee',
     'shader_B'       : "Use Cycles (toon)",
     'shader_D'       : "Use Cycles (classic)",
@@ -86,10 +53,6 @@ translation_dictionary = {
     'import_model'  : 'Import model',
     'prep'          : 'Prep for target application',
 
-    # 'studio_object'             : 'Import studio object',
-    # 'studio_object_tt'          : 'Open the folder containing the fbx files exported with SB3Utility',
-    # 'convert_texture'           : 'Convert texture?',
-    # 'convert_texture_tt'        : '''Enable this if you want the plugin to saturate the item's textures using the in-game LUT''',
     'single_animation'          : 'Import single animation file',
     'single_animation_tt'       : 'Only available for the Rigify armature. Imports an exported Koikatsu .fbx animation file and applies it to your character. Mixamo .fbx files are also supported if you use the toggle below',
     'animation_koi'             : 'Import Koikatsu animation',
@@ -99,28 +62,21 @@ translation_dictionary = {
     'animation_library_tt'      : "Only available for the Rigify Armature. Creates an animation library using the current file and current character. Will not save over the current file in case you want to reuse it. Open the folder containing the animation files exported with SB3Utility",
     'animation_library_scale'   : 'Scale arms',
     'animation_library_scale_tt': 'Check this to scale the arms on the y axis by 5%. This will make certain poses more accurate to the in-game one',
-    # 'map_library'               : 'Create map asset library',
-    # 'map_library_tt'            : "Creates an asset library using ripped map data. Open the folder containing the map files exported with SB3Utility. Takes 40 to 500 seconds per map",
 
     'rigify_convert'            : "Convert to Rigify",
     'rigify_convert_tt'         : "Convert the FK armature into a Rigify armature (Warning: This is irreversible)",
     'sep_eye'                   : "Separate Eyes and Eyebrows",
     'sep_eye_tt'                : "Separates the Eyes and Eyebrows from the Body object and links the shapekeys to the Body object. Useful for when you want to make eyes or eyebrows appear through the hair using the Cryptomatte features in the compositor",
-    # 'bone_visibility'           : "Show bones for current outfit",
-    # 'bone_visibility_tt'        : "This will update visibility for all accessory bones. For example, if you have an Outfit 00 and an Outfit 01, both of them are visible then all accessory bones will be shown. If you hide Outfit 00 and click this button, only Outfit 01's accessory bones will be shown",
     'link_hair'                 : 'Update hair materials',
     'link_hair_tt'              : 'Click to copy the current colors, detail intensity, etc to the other hair materials on this object',
 
     'kkbp_import_tt'    : "Imports a Koikatsu model (.pmx format) and applies fixes to it",
-    'export_prep_tt'    : "Use the FK Armature for the best results. Check the dropdown for more info",
-    # 'bake_mats_tt'      : "Finalize materials as .png files. These will be stored in the original .pmx folder",
-
-    # 'delete_cache' : 'Delete cache',
-    # 'delete_cache_tt' : 'Enable this to delete the cache files. Cache files are generated when you import a model or finalize materials. These are stored in the pmx folder as "atlas_files", "baked_files", "dark_files" and "saturated_files". Enabling this option will delete ALL files inside of these folders',
+    'export_prep_tt'    : "Only works if you import with the FK armature. Prepares your model for export to Unity, Unreal Engine, or other 3D applications",
 
     'use_atlas' : 'Create atlas',
-    'use_atlas_tt': 'Enable this to create a material atlas when finalizing materials',
     'dont_use_atlas' : 'Don\'t create Atlas',
+    'atlas_no_eyes' : 'Create atlas (skip eyes)',
+    'use_atlas_tt': 'Enable this to create a material atlas when finalizing materials. If you want to apply UV offsets to the eye materials in Unity, Unreal, etc then use the "skip eyes" option',
 
     'mat_comb_tt' : 'KKBP uses parts of Shotariya\'s Material Combiner addon to automatically merge your materials into an atlas. Click this if you want to manually combine your materials instead of letting KKBP do it for you (requires you to download the Material Combiner addon)',
     'matcomb' : 'Setup materials for Material Combiner',
@@ -129,8 +85,6 @@ translation_dictionary = {
 
     'pillow' : 'Install PIL to use the atlas feature',
     'pillow_tt':'Click to install Pillow from PyPI. This could take a while and might require you to run Blender as Admin',
-    # 'reset_mats' : 'Reset finalized materials',
-    # 'reset_mats_tt' : 'Click this to reset ALL of your finalized materials back to the -ORG version. Handy if you want to refinalize everything',
     
     'max_thread_num' : 'Max threads',
     'max_image_num' : 'Max parallel images',
@@ -138,13 +92,21 @@ translation_dictionary = {
     'max_thread_num_tt' : 'KKBP saturates your character\'s textures during model import. This option determines how many CPU cores you want to use to perform the saturation. If you have more cores to spare, you can set it higher. Default is 8.',
     'max_image_num_tt' : 'KKBP saturates your character\'s textures during model import. This option determines how many images can be saturated at once. This setting affects memory usage. For example, if the program loads two 4096 x 4096 images, the peak memory usage could reach 8 GB. If you don\'t have 8GB of free memory Blender could crash. Default is 2',
     'batch_rows_tt' : 'KKBP saturates your character\'s textures during model import. This option determines how many rows of pixels to process in one batch. For example, if this setting is set to 512 rows and the program is saturating a 1024 x 1024 image, it will be processed in two 512 x 1024 batches. Increasing this value can allow you to process the full image in a single batch, but will increase CPU and memory usage. Default is 512',
+
+    'outline' : 'Use outlines',
+    'no_outline' : 'Don\'t use outlines',
+    'outline_tt'  : "If outlines are enabled, KKBP will create an outline material for each material on the model.",
+
+    'use_rigify_tt' : 'Enable this to use Rigify as the default armature when importing models. Requires the Rigify addon to be enabled in Blender preferences',
+    'dont_use_rigify_tt' : 'Disable this to use the FK armature as the default armature when importing models',
+
+    'bad_prep': 'Import with the FK armature to use Export features!'
     }
 
 def t(text_entry):
     try:
         if locale == 'ja_JP':
             return jp_translation[text_entry]
-        #Blender 4 changed the language code for Simplified Chinese from 'zh_CN' to 'zh_HANS'
         elif locale in ['zh_HANS', 'zh_CN']:
             return zh_translation[text_entry]
         else:

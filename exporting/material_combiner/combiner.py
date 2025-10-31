@@ -46,6 +46,8 @@ class Combiner(bpy.types.Operator):
             for type in bake_types:
                 #replace all images
                 for material in [mat_slot.material for mat_slot in object.material_slots if mat_slot.material.get('name')]:
+                    if not material.node_tree.nodes.get('Image Texture'):
+                        continue
                     if node := material.node_tree.nodes.get(get_image_node(type)):
                         material.node_tree.nodes['Image Texture'].image = None
                         image = node.image

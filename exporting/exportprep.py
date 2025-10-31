@@ -284,7 +284,7 @@ def create_material_atlas():
                     continue
                 
                 if image:
-                    if image.name in ['Template: Pattern Placeholder', 'Template: Normal detail placeholder']:
+                    if image.name in ['Template: Placeholder', 'Template: Normal detail placeholder']:
                         image = None
                 if not image:
                     print(image)
@@ -301,6 +301,8 @@ def create_material_atlas():
                     else:
                         atlas_material =  bpy.data.materials.get('{} Atlas'.format(material.name))
                     atlas_material.node_tree.nodes[get_image_node(bake_type)].image = atlas_image
+                    #remove the alpha masks because they interfere with the atlas
+                    atlas_material.node_tree.nodes['_AM.png'].image = bpy.data.images['Template: Placeholder']
                     #load in the light image to the dark slot to make it look better when only the light colors are baked.
                     # This will be overwritten with the dark image in the next loop if the user baked it
                     if bake_type == 'light':
@@ -311,6 +313,15 @@ def create_material_atlas():
             material = mat_slot.material
             atlas_material = bpy.data.materials.get('{} Atlas'.format(material.name))
             mat_slot.material = atlas_material
+
+    #get rid of the outlines
+    for index, obj in enumerate([o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'MESH']):
+        c.switch(obj, 'object')
+        bpy.ops.object.material_slot_remove_unused()
+        for mod in obj.modifiers:
+            if mod.type == 'SOLIDIFY':
+                mod.show_viewport = False
+                mod.show_render = False
 
     #setup the new collection for exporting
     layer_collection = bpy.context.view_layer.layer_collection

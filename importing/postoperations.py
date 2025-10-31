@@ -63,7 +63,7 @@ class post_operations(bpy.types.Operator):
         outfit_ids = list(set(outfit_ids))
         for id in outfit_ids:
             clothes_in_this_id = [c for c in clothes_and_hair if c.get('id') == str(id).zfill(2)]
-            c.move_and_hide_collection(clothes_in_this_id, 'Outfit ' + str(id).zfill(2) + ' ' + c.get_name(), hide = (id != min(outfit_ids) and bpy.context.scene.kkbp.categorize_dropdown != 'B'))
+            c.move_and_hide_collection(clothes_in_this_id, 'Outfit ' + str(id).zfill(2) + ' ' + c.get_name(), hide = (id != min(outfit_ids) and not bpy.context.scene.kkbp.separate_clothes))
 
         #put any clothes variations into their own collection
         outfit_ids = (int(c['id']) for c in c.get_alts() if c.get('id'))
@@ -213,7 +213,7 @@ class post_operations(bpy.types.Operator):
             c.kklog('Rigify conversion skipped for SVS characters.')
             return
 
-        if not bpy.context.scene.kkbp.armature_dropdown == 'Rigify':
+        if not bpy.context.scene.kkbp.use_rigify:
             return
         
         #Activate the built in Rigify addon if it isn't already enabled.
@@ -294,7 +294,7 @@ class post_operations(bpy.types.Operator):
 
         #delete nsfw bones
         rig = c.get_rig()
-        if bpy.context.scene.kkbp.sfw_mode and bpy.context.scene.kkbp.armature_dropdown == 'Rigify':
+        if bpy.context.scene.kkbp.sfw_mode and bpy.context.scene.kkbp.use_rigify:
             rig.data.collections_all['NSFW'].is_visible = True
             def delete_bone(group_list):
                 bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -342,7 +342,7 @@ class post_operations(bpy.types.Operator):
             rig.data.collections_all['NSFW'].name = 'Chest'
 
     def separate_meshes(self):
-        if bpy.context.scene.kkbp.categorize_dropdown == 'B':
+        if bpy.context.scene.kkbp.separate_clothes:
             #separate each outfit by material
             for obj in c.get_outfits():
                 if obj.modifiers.get('Outline Modifier'):

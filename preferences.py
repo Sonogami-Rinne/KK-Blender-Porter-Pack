@@ -12,96 +12,56 @@ class KKBPPreferences(bpy.types.AddonPreferences):
     # when defining this in a submodule of a python package.
     bl_idname = __package__
 
-    sfw_mode : BoolProperty(
-    description=t('sfw_mode_tt'),
-    default = False)
-
-    fix_seams : BoolProperty(
-    description=t('seams_tt'),
-    default = True)
-    
-    use_outline : BoolProperty(
-    description= t('outline_tt'),
-    default = True)
-    
-    # use_material_fake_user : BoolProperty(
-    # description=t('keep_templates_tt'),
-    # default = True)
-
-    old_bake_bool : BoolProperty(
-    description=t('old_bake_tt'),
-    default = False)
-
-    armature_dropdown : EnumProperty(
-        items=(
-            ("Rigify", t('arm_drop_A'), t('arm_drop_A_tt')),
-            ("FK", t('arm_drop_B'), t('arm_drop_B_tt')),
-        ), name="", default="Rigify", description=t('arm_drop'))
-
-    categorize_dropdown : EnumProperty(
-        items=(
-            ("A", t('cat_drop_A'), t('cat_drop_A_tt')),
-            ("B", t('cat_drop_B'), t('cat_drop_B_tt')),
-        ), name="", default="A", description=t('cat_drop'))
-
-    # colors_dropdown : BoolProperty(
-    # description=t('dark_F_tt'),
-    # default = True)
-
-    # bake_light_bool : BoolProperty(
-    # description=t('bake_light_tt'),
-    # default = True)
-
-    # bake_dark_bool : BoolProperty(
-    # description=t('bake_dark_tt'),
-    # default = True)
-
-    # bake_norm_bool : BoolProperty(
-    # description=t('bake_norm_tt'),
-    # default = False)
-
-    use_atlas : BoolProperty(
-    description=t('use_atlas'),
-    default = True)
-
-    # delete_cache : BoolProperty(
-    # description=t('delete_cache'),
-    # default = False)
-
-    prep_dropdown : EnumProperty(
-        items=(
-            ("A", t('prep_drop_A'), t('prep_drop_A_tt')),
-            #("C", "MikuMikuDance - PMX compatible", " "),
-            ("D", t('prep_drop_D'), t('prep_drop_D_tt')),
-            ("B", t('prep_drop_B'), t('prep_drop_B_tt')),
-        ), name="", default="A", description=t('prep_drop'))
-
-    simp_dropdown : EnumProperty(
-        items=(
-            ("A", t('simp_drop_A'), t('simp_drop_A_tt')),
-            ("B", t('simp_drop_B'), t('simp_drop_B_tt')),
-            ("C", t('simp_drop_C'), t('simp_drop_C_tt')),
-        ), name="", default="A", description=t('simp_drop'))
-    
-    # bake_light_bool : BoolProperty(
-    # description=t('bake_light_tt'),
-    # default = True)
-
-    # bake_dark_bool : BoolProperty(
-    # description=t('bake_dark_tt'),
-    # default = True)
-
-    # bake_norm_bool : BoolProperty(
-    # description=t('bake_norm_tt'),
-    # default = False)
-    
     shader_dropdown : EnumProperty(
         items=(
             ("A", t('shader_A'), ''),
             ("B", t('shader_B'), ''),
             ("D", t('shader_D'), ''),
             ("C", t('shader_C'), t('shader_C_tt')),
-        ), name="", default="A", description="Shader")
+        ), name="", default='A', description="Shader")
+
+    use_rigify : BoolProperty(
+        description=t('use_rigify_tt'),
+        default = True)
+
+    sfw_mode : BoolProperty(
+        description=t('sfw_mode_tt'),
+        default = False)
+
+    fix_seams : BoolProperty(
+        description=t('seams_tt'),
+        default = True)
+    
+    use_outline : BoolProperty(
+        description= t('outline_tt'),
+        default = True)
+    
+    separate_clothes : BoolProperty(
+        description=t('cat_drop'),
+        default=False)
+    
+    prep_dropdown : EnumProperty(
+    items=(
+        ("A", t('prep_drop_A'), t('prep_drop_A_tt')),
+        #("C", "MikuMikuDance - PMX compatible", " "),
+        ("D", t('prep_drop_D'), t('prep_drop_D_tt')),
+        ("E", t('prep_drop_E'), t('prep_drop_E_tt')),
+        ("B", t('prep_drop_B'), t('prep_drop_B_tt')),
+    ), name="", default='A', description=t('prep_drop'))
+
+    simp_dropdown : EnumProperty(
+        items=(
+            ("A", t('simp_drop_A'), t('simp_drop_A_tt')),
+            ("B", t('simp_drop_B'), t('simp_drop_B_tt')),
+            ("C", t('simp_drop_C'), t('simp_drop_C_tt')),
+        ), name="", default='A', description=t('simp_drop'))
+
+    atlas_dropdown : EnumProperty(
+        items=(
+            ("Atlas", t('use_atlas'), ""),
+            ("skip_eyes", t('atlas_no_eyes'), ""),
+            ("None", t('dont_use_atlas'), ""),
+        ), name="", default='Atlas', description=t('use_atlas_tt'))
     
     max_thread_num: IntProperty(
         min=1, max = 64,
@@ -125,48 +85,35 @@ class KKBPPreferences(bpy.types.AddonPreferences):
         col = layout.column(align=True)
         row = col.row(align=True)
         row.label(text='Change the default options for the KKBP Importer below:')
-        row = col.row(align=True)
-        split = row.split(align = True, factor=splitfac)
-        split.prop(self, "categorize_dropdown")
-        split.prop(self, "armature_dropdown")
-        
-        row = col.row(align=True)
-        split = row.split(align = True, factor=splitfac)
-        split.prop(self, "shader_dropdown")
-
-        row = col.row(align=True)
-        split = row.split(align = True, factor=splitfac)
-        # split.prop(self, "colors_dropdown", toggle=True, text = t('dark_F'))
-        # split.prop(self, "delete_cache", toggle=True, text = t('delete_cache'))
-
-        row = col.row(align=True)
-        split = row.split(align = True, factor=splitfac)
-        split.prop(self, "fix_seams", toggle=True, text = t('seams'))
-        # split.prop(self, "use_material_fake_user", toggle=True, text = t('keep_templates'))
-
-        row = col.row(align=True)
-        split = row.split(align = True, factor=splitfac)
-        split.prop(self, "use_outline", toggle=True, text = t('outline'))
-        split.prop(self, "sfw_mode", toggle=True, text = t('sfw_mode'))
-        
-        col = layout.column(align=True)
-        row = col.row(align=True)
-        split = row.split(align=True, factor=0.33)
-        split.prop(self, "bake_light_bool", toggle=True, text = t('bake_light'))
-        split.prop(self, "bake_dark_bool", toggle=True, text = t('bake_dark'))
-        split.prop(self, "bake_norm_bool", toggle=True, text = t('bake_norm'))
-        row = col.row(align=True)
-        split = row.split(align=True, factor=splitfac)
-        split.prop(self, 'old_bake_bool', toggle=True, text = t('old_bake'))
+                
         row = col.row(align = True)
-        split = row.split(align=True, factor=splitfac)
-        split.prop(self, "use_atlas", toggle=True, text = t('use_atlas'))
+        box = row.box()
+        col = box.column(align=True)
         
-        col = layout.column(align=True)
+        row = col.row(align=True)
+        split = row.split(align = True, factor=splitfac)
+        split.prop(context.scene.kkbp, "use_rigify", toggle=True, text = t('use_rigify') if context.scene.kkbp.use_rigify else t('no_rigify'))
+        split.prop(context.scene.kkbp, "shader_dropdown")
+
+        row = col.row(align=True)
+        split = row.split(align = True, factor=splitfac)
+        split.prop(context.scene.kkbp, "use_outline", toggle=True, text = t('outline') if context.scene.kkbp.use_outline else t('no_outline'))
+        split.prop(context.scene.kkbp, "separate_clothes", toggle=True, text = t('separate') if context.scene.kkbp.separate_clothes else t('no_separate'))
+        
+        row = col.row(align=True)
+        split = row.split(align = True, factor=splitfac)
+        split.prop(context.scene.kkbp, "fix_seams", toggle=True, text = t('seams'))
+        split.prop(context.scene.kkbp, "sfw_mode", toggle=True, text = t('sfw_mode'))
+
+        box = layout.box()
+        col = box.column(align=True)
+        row = col.row(align=True)
         row = col.row(align=True)
         split = row.split(align=True, factor=splitfac)
-        split.prop(self, "simp_dropdown")
-        split.prop(self, "prep_dropdown")
+        split.prop(context.scene.kkbp, "simp_dropdown")
+        split.prop(context.scene.kkbp, "prep_dropdown")
+        row = col.row(align=True)
+        row.prop(context.scene.kkbp, "atlas_dropdown")
 
         col = layout.column(align=True)
         row = col.row(align=True)
