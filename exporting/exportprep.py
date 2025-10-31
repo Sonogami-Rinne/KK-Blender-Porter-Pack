@@ -147,10 +147,39 @@ def get_image_node(bake_type):
     }
     return dict[bake_type]
 
+def save_uvs(vgroup_name):
+    """Save UV coordinates for a specific vertex group."""
+    body = c.get_body()
+    body = bpy.data.objects[body.name + '.001']
+    
+    mesh = body.data
+    uv_layer = mesh.uv_layers.get("uv_main")
+    # Get vertex group and member vertex indices
+    vgroup = body.vertex_groups.get(vgroup_name)
+    group_verts = {v.index for v in body.data.vertices if any(g.group == vgroup.index for g in v.groups)}
+    saved_uvs = {}
+    for poly in mesh.polygons:
+        for loop_idx in poly.loop_indices:
+            vert_idx = mesh.loops[loop_idx].vertex_index
+            if vert_idx in group_verts:
+                saved_uvs[loop_idx] = tuple(uv_layer.data[loop_idx].uv)
+    return saved_uvs
+
+def restore_uvs(uvs, vgroup_name):
+    """Restore UV coordinates previously saved for the vertex group."""
+    body = c.get_body()
+    body = bpy.data.objects[body.name + '.001']
+
+    uv_layer = body.data.uv_layers.get("uv_main")
+    saved_uvs = uvs
+    for loop_idx_str, uv_coords in saved_uvs.items():
+        loop_idx = int(loop_idx_str)
+        uv_layer.data[loop_idx].uv = uv_coords
+
 def create_material_atlas():
     '''Merges all the finalized material png files into a single atlas file, copies the current model and applies the atlas to the copy'''
 
-    folderpath = os.path.join(bpy.context.scene.kkbp.import_dir, 'baked_files', '')
+    folderpath = os.path.join(bpy.context.scene.kkbp.import_dir, 'atlas_files', '')
 
     # https://blender.stackexchange.com/questions/127403/change-active-collection
     #Recursivly transverse layer_collection for a particular name
@@ -224,6 +253,11 @@ def create_material_atlas():
     assert(col is not scene.collection)
     copied_collection = copy(scene.collection, col)
     copied_collection.name = c.get_name() + ' atlas'
+
+    #get the uv info for the eyes if skip eyes is enabled
+    if bpy.context.scene.kkbp.atlas_dropdown == 'skip_eyes':
+        left_uvs =  save_uvs('Left Eye')
+        right_uvs = save_uvs('Right Eye')
 
     #setup materials for the combiner script
     for obj in [o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'MESH']:
@@ -314,6 +348,19 @@ def create_material_atlas():
             atlas_material = bpy.data.materials.get('{} Atlas'.format(material.name))
             mat_slot.material = atlas_material
 
+    #restore the eye uvs if skip eyes is enabled
+    if bpy.context.scene.kkbp.atlas_dropdown == 'skip_eyes':
+        body = c.get_body()
+        body = bpy.data.objects[body.name + '.001']
+        if body.material_slots.get('KK cf_m_hitomi_00_cf_Ohitomi_L02 Atlas'):
+            mat = bpy.data.materials.get('KK cf_m_hitomi_00_cf_Ohitomi_L02')
+            body.material_slots['KK cf_m_hitomi_00_cf_Ohitomi_L02 Atlas'].material = mat
+            restore_uvs(left_uvs,  'Left Eye')
+            mat.node_tree.nodes['_light.png'].image.save_render(filepath=os.path.join(folderpath, 'eye_left.png'))
+            body.material_slots['KK cf_m_hitomi_00_cf_Ohitomi_R02 Atlas'].material = bpy.data.materials.get('KK cf_m_hitomi_00_cf_Ohitomi_R02')
+            restore_uvs(right_uvs, 'Right Eye')
+            mat.node_tree.nodes['_light.png'].image.save_render(filepath=os.path.join(folderpath, 'eye_right.png'))
+
     #get rid of the outlines
     for index, obj in enumerate([o for o in bpy.data.collections[c.get_name() + ' atlas'].all_objects if o.type == 'MESH']):
         c.switch(obj, 'object')
@@ -336,7 +383,7 @@ def create_material_atlas():
     bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.path_mode = 'COPY'
     bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.embed_textures = False
     bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.mesh_smooth_type = 'OFF'
-    bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.filepath = os.path.join(folderpath.replace('baked_files', 'atlas_files'), f'{sanitizeMaterialName(c.get_name())} exported model atlas.fbx')
+    bpy.data.collections[c.get_name() + ' atlas'].exporters[0].export_properties.filepath = os.path.join(folderpath, f'{sanitizeMaterialName(c.get_name())} exported model atlas.fbx')
 
     #hide the new collection
     c.show_layer_collection('Rigged tongue ' + c.get_name() + '.001', True)
@@ -364,7 +411,7 @@ class export_prep(bpy.types.Operator):
         try:
             c.toggle_console()
             prep_operations(prep_type, simp_type)
-            if bpy.context.scene.kkbp.use_atlas and globs.pil_exist:
+            if bpy.context.scene.kkbp.atlas_dropdown != 'None' and globs.pil_exist:
                 create_material_atlas()
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             c.toggle_console()
