@@ -336,9 +336,6 @@ class bake_materials(bpy.types.Operator):
                 #hide all objects except this one
                 for obj in [o for o in bpy.context.view_layer.objects if o]:
                     obj.hide_render = True
-                # #unhide the object to bake (but only if the old baking system is not used)
-                # if not bpy.context.scene.kkbp.old_bake_bool:
-                #     bake_object.hide_render = False
                 camera = setup_camera()
                 c.switch(bake_object)
                 setup_geometry_nodes_and_fillerplane(camera)
@@ -364,38 +361,6 @@ class bake_materials(bpy.types.Operator):
             for obj in bpy.context.view_layer.objects:
                 obj.hide_render = False
             
-            # if scene.use_atlas:
-            #     create_material_atlas(folderpath)
-            
-            # #setup the original collection for exporting
-            # # https://blender.stackexchange.com/questions/127403/change-active-collection
-            # #Recursively transverse layer_collection for a particular name
-            # def recurLayerCollection(layerColl, collName):
-            #     found = None
-            #     if (layerColl.name == collName):
-            #         return layerColl
-            #     for layer in layerColl.children:
-            #         found = recurLayerCollection(layer, collName)
-            #         if found:
-            #             return found
-
-            # layer_collection = bpy.context.view_layer.layer_collection
-            # layerColl = recurLayerCollection(layer_collection, c.get_name())
-            # bpy.context.view_layer.active_layer_collection = layerColl
-            # if bpy.app.version[0] != 3:
-            #     if not bpy.data.collections[c.get_name()].exporters:
-            #         bpy.ops.collection.exporter_add(name="IO_FH_fbx")
-            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.object_types = {'EMPTY', 'ARMATURE', 'MESH', 'OTHER'}
-            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.use_mesh_modifiers = False
-            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.add_leaf_bones = False
-            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.bake_anim = False
-            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.apply_scale_options = 'FBX_SCALE_ALL'
-            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.path_mode = 'COPY'
-            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.embed_textures = False
-            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.mesh_smooth_type = 'OFF'
-            #         bpy.data.collections[c.get_name()].exporters[0].export_properties.filepath = os.path.join(folderpath.replace('baked_files', 'atlas_files'), f'{sanitizeMaterialName(c.get_name())} exported model.fbx')
-            # c.toggle_console()
-
             c.kklog('Finished in ' + str(time.time() - last_step)[0:4] + 's')
             c.set_viewport_shading('SOLID')
             return {'FINISHED'}
