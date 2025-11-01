@@ -36,13 +36,8 @@ def reg_unreg(register_bool):
     from .exporting.material_combiner.extend_types import CombineList
     from .exporting.material_combiner.get_pillow import InstallPIL
 
-    from .extras.importstudio import import_studio
-    from .extras.createmapassetlibrary import map_asset_lib
     from .extras.createanimationlibrary import anim_asset_lib
     from .extras.linkshapekeys import link_shapekeys
-    from .extras.updatebones import update_bones
-    from .extras.imageconvert import image_convert
-    from .extras.imageconvert import image_dark_convert
     from .extras.rigifywrapper import rigify_convert
     from .extras.rigifyscripts.rigify_before import rigify_before
     from .extras.rigifyscripts.rigify_after import rigify_after
@@ -50,7 +45,6 @@ def reg_unreg(register_bool):
     from .extras.importanimation import anim_import
     from .extras.matcombsetup import mat_comb_setup
     from .extras.matcombswitch import mat_comb_switch
-    from .extras.resetmaterials import reset_materials
     from .extras.linkhair import link_hair
     from .extras.editmaterial import edit_material, revert_material, save_material
     from .extras.torestpose import ApplyPoseAsRestPosePlus
@@ -68,14 +62,9 @@ def reg_unreg(register_bool):
     classes = (
         bake_materials, 
         export_prep,
-        image_convert, 
-        image_dark_convert,
 
-        import_studio,
-        map_asset_lib,
         anim_asset_lib,
         link_shapekeys,
-        update_bones,
         rigify_convert,
         rigify_before,
         rigify_after,
@@ -88,7 +77,6 @@ def reg_unreg(register_bool):
         mat_comb_setup,
         mat_comb_switch,
         InstallPIL,
-        reset_materials,
         link_hair,
         edit_material,
         revert_material,
