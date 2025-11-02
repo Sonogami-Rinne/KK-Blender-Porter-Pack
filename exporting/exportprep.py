@@ -4,6 +4,7 @@ import bpy, traceback, time, os
 from .. import common as c
 from ..interface.dictionary_en import t
 from .material_combiner import globs
+from ..importing.modifyarmature import modify_armature
 
 def prep_operations(prep_type, simp_type):
 
@@ -13,7 +14,7 @@ def prep_operations(prep_type, simp_type):
     bpy.ops.armature.collection_show_all()
     
     # If exporting for Unreal...
-    if prep_type == 'E':
+    if prep_type == 'Unreal':
         #Rename some bones to make it match Mannequin skeleton
         #Not necessary, but allows Unreal automatically recognize and match bone names when retargeting
         ue_rename_dict = {
@@ -59,6 +60,14 @@ def prep_operations(prep_type, simp_type):
         armature.data.edit_bones["ball_r"].tail.y = armature.data.edit_bones["ball_r"].head.y - 0.05
 
         c.switch(armature, 'pose')
+    
+    #If exporting for Koikatsu...
+    if prep_type == 'Koikatsu':
+        #rename the bones back to their original names
+        for bone_name in modify_armature.bone_rename_dict:
+            if armature.data.bones.get(modify_armature.bone_rename_dict[bone_name]):
+                armature.data.bones[modify_armature.bone_rename_dict[bone_name]].name = bone_name
+        c.switch(armature, 'pose')
 
     #If simplifying the bones...
     if simp_type in ['A', 'B']:
@@ -94,7 +103,7 @@ def prep_operations(prep_type, simp_type):
         bpy.ops.kkbp.cats_merge_weights()
 
     #If exporting for VRM or VRC...
-    if prep_type in ['A', 'D']:
+    if prep_type in ['VRM', 'VRC']:
         c.kklog('Editing armature for VRM...')
         c.switch(armature, 'edit')
 
@@ -118,7 +127,7 @@ def prep_operations(prep_type, simp_type):
         #Merge specific bones for unity rig autodetect
         merge_these = ['cf_j_waist02', 'cf_s_waist01', 'cf_s_hand_L', 'cf_s_hand_R']
         #Delete the upper chest for VR chat models, since it apparently causes errors with eye tracking
-        if prep_type == 'D':
+        if prep_type == 'VRC':
             merge_these.append('Upper Chest')
             c.kklog('Removing Upper Chest bone for VRC...')
         for bone in armature.data.bones:

@@ -24,15 +24,15 @@ class post_operations(bpy.types.Operator):
     
     def execute(self, context):
         try:
-            self.hide_unused_objects()
-
             self.apply_cycles()
             self.apply_eeveemod()
             self.apply_rigify()
             self.apply_sfw()
             self.separate_meshes()
             self.apply_outlines()
-            
+
+            self.hide_unused_objects()
+
             c.switch(c.get_armature(), 'object')
             c.clean_orphaned_data()
             c.set_viewport_shading('SOLID')
@@ -407,10 +407,6 @@ class post_operations(bpy.types.Operator):
         objects.extend(c.get_outfits())
         objects.extend(c.get_alts())
 
-        for collection in bpy.context.view_layer.active_layer_collection.children:
-            if collection.name.startswith('Outfit'):
-                collection.exclude = False
-
         outline_starts = {}
 
         for ob in objects:
@@ -473,9 +469,5 @@ class post_operations(bpy.types.Operator):
             finalOutlineMat.node_tree.nodes['_AM.png'].image = bpy.data.images['Template: Placeholder']
             finalOutlineMat.name = 'Outline ' + ob.name
             ob.data.materials.append(finalOutlineMat)
-
-        for collection in bpy.context.view_layer.active_layer_collection.children:
-            if collection.name.startswith('Outfit') and collection.name[8:9] != '0':
-                collection.exclude = True
-
+        
         c.print_timer('add_outlines_to_hair_clothes')

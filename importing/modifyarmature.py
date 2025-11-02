@@ -117,6 +117,68 @@ class modify_armature(bpy.types.Operator):
                 'cf_j_toes2_R', 'cf_j_toes20_R',
                 'cf_j_toes3_R', 'cf_j_toes30_R', 'cf_j_toes4_R']
 
+    bone_rename_dict = {
+        'cf_n_height':'Center',
+        'cf_j_hips':'Hips',
+        'cf_j_waist01':'Pelvis',
+        'cf_j_spine01':'Spine',
+        'cf_j_spine02':'Chest',
+        'cf_j_spine03':'Upper Chest',
+        'cf_j_neck':'Neck',
+        'cf_j_head':'Head',
+        'cf_j_shoulder_L':'Left shoulder',
+        'cf_j_shoulder_R':'Right shoulder',
+        'cf_j_arm00_L':'Left arm',
+        'cf_j_arm00_R':'Right arm',
+        'cf_j_forearm01_L':'Left elbow',
+        'cf_j_forearm01_R':'Right elbow',
+        'cf_j_hand_R':'Right wrist',
+        'cf_j_hand_L':'Left wrist',
+        'cf_J_hitomi_tx_L':'Left Eye',
+        'cf_J_hitomi_tx_R':'Right Eye',
+
+        'cf_j_thumb01_L':'Thumb0_L',
+        'cf_j_thumb02_L':'Thumb1_L',
+        'cf_j_thumb03_L':'Thumb2_L',
+        'cf_j_ring01_L':'RingFinger1_L',
+        'cf_j_ring02_L':'RingFinger2_L',
+        'cf_j_ring03_L':'RingFinger3_L',
+        'cf_j_middle01_L':'MiddleFinger1_L',
+        'cf_j_middle02_L':'MiddleFinger2_L',
+        'cf_j_middle03_L':'MiddleFinger3_L',
+        'cf_j_little01_L':'LittleFinger1_L',
+        'cf_j_little02_L':'LittleFinger2_L',
+        'cf_j_little03_L':'LittleFinger3_L',
+        'cf_j_index01_L':'IndexFinger1_L',
+        'cf_j_index02_L':'IndexFinger2_L',
+        'cf_j_index03_L':'IndexFinger3_L',
+
+        'cf_j_thumb01_R':'Thumb0_R',
+        'cf_j_thumb02_R':'Thumb1_R',
+        'cf_j_thumb03_R':'Thumb2_R',
+        'cf_j_ring01_R':'RingFinger1_R',
+        'cf_j_ring02_R':'RingFinger2_R',
+        'cf_j_ring03_R':'RingFinger3_R',
+        'cf_j_middle01_R':'MiddleFinger1_R',
+        'cf_j_middle02_R':'MiddleFinger2_R',
+        'cf_j_middle03_R':'MiddleFinger3_R',
+        'cf_j_little01_R':'LittleFinger1_R',
+        'cf_j_little02_R':'LittleFinger2_R',
+        'cf_j_little03_R':'LittleFinger3_R',
+        'cf_j_index01_R':'IndexFinger1_R',
+        'cf_j_index02_R':'IndexFinger2_R',
+        'cf_j_index03_R':'IndexFinger3_R',
+
+        'cf_j_thigh00_L':'Left leg',
+        'cf_j_thigh00_R':'Right leg',
+        'cf_j_leg01_L':'Left knee',
+        'cf_j_leg01_R':'Right knee',
+        'cf_j_foot_L':'Left ankle',
+        'cf_j_foot_R':'Right ankle',
+        'cf_j_toes_L':'Left toe',
+        'cf_j_toes_R':'Right toe'
+        }
+
     def execute(self, context):
         try:
             is_svs = c.is_svs()
@@ -128,7 +190,7 @@ class modify_armature(bpy.types.Operator):
             self.rebuild_bone_data()
             
             if not is_svs:
-                self.reparent_leg_and_body_bone()
+                self.unparent_body_bone()
                 self.delete_non_height_bones()
                 self.bend_bones_for_iks()
 
@@ -245,16 +307,12 @@ class modify_armature(bpy.types.Operator):
             bone.lock_location = [False, False, False]
         c.print_timer('remove_bone_locks_and_modifiers')
 
-    def reparent_leg_and_body_bone(self):
-        '''Reparent the leg bone, and unparent the body_bone bone to match the koikatsu armature'''
+    def unparent_body_bone(self):
+        '''Unparent the body_bone bone to match the koikatsu armature'''
         armature = c.get_armature()
         c.switch(armature, 'EDIT')
-        #reparent foot to leg03
-        armature.data.edit_bones['cf_j_foot_R'].parent = armature.data.edit_bones['cf_j_leg03_R']
-        armature.data.edit_bones['cf_j_foot_L'].parent = armature.data.edit_bones['cf_j_leg03_L']
-        #unparent body bone to match KK
         armature.data.edit_bones['p_cf_body_bone'].parent = None
-        c.print_timer('reparent_leg_and_body_bone')
+        c.print_timer('unparent_body_bone')
 
     def delete_non_height_bones(self):
         '''delete bones not under the cf_n_height bone'''
@@ -971,71 +1029,10 @@ class modify_armature(bpy.types.Operator):
         setDriver('cf_s_waist02', 'location', 2, 'cf_j_waist02', 'ROT_X',  '0.2', expresstype='moveABS')
 
     def rename_bones_for_clarity(self):
-        '''rename core bones for easier identification. Also allows Unity to automatically detect each bone in a humanoid armature'''
-        unity_rename_dict = {
-        'cf_n_height':'Center',
-        'cf_j_hips':'Hips',
-        'cf_j_waist01':'Pelvis',
-        'cf_j_spine01':'Spine',
-        'cf_j_spine02':'Chest',
-        'cf_j_spine03':'Upper Chest',
-        'cf_j_neck':'Neck',
-        'cf_j_head':'Head',
-        'cf_j_shoulder_L':'Left shoulder',
-        'cf_j_shoulder_R':'Right shoulder',
-        'cf_j_arm00_L':'Left arm',
-        'cf_j_arm00_R':'Right arm',
-        'cf_j_forearm01_L':'Left elbow',
-        'cf_j_forearm01_R':'Right elbow',
-        'cf_j_hand_R':'Right wrist',
-        'cf_j_hand_L':'Left wrist',
-        'cf_J_hitomi_tx_L':'Left Eye',
-        'cf_J_hitomi_tx_R':'Right Eye',
-
-        'cf_j_thumb01_L':'Thumb0_L',
-        'cf_j_thumb02_L':'Thumb1_L',
-        'cf_j_thumb03_L':'Thumb2_L',
-        'cf_j_ring01_L':'RingFinger1_L',
-        'cf_j_ring02_L':'RingFinger2_L',
-        'cf_j_ring03_L':'RingFinger3_L',
-        'cf_j_middle01_L':'MiddleFinger1_L',
-        'cf_j_middle02_L':'MiddleFinger2_L',
-        'cf_j_middle03_L':'MiddleFinger3_L',
-        'cf_j_little01_L':'LittleFinger1_L',
-        'cf_j_little02_L':'LittleFinger2_L',
-        'cf_j_little03_L':'LittleFinger3_L',
-        'cf_j_index01_L':'IndexFinger1_L',
-        'cf_j_index02_L':'IndexFinger2_L',
-        'cf_j_index03_L':'IndexFinger3_L',
-
-        'cf_j_thumb01_R':'Thumb0_R',
-        'cf_j_thumb02_R':'Thumb1_R',
-        'cf_j_thumb03_R':'Thumb2_R',
-        'cf_j_ring01_R':'RingFinger1_R',
-        'cf_j_ring02_R':'RingFinger2_R',
-        'cf_j_ring03_R':'RingFinger3_R',
-        'cf_j_middle01_R':'MiddleFinger1_R',
-        'cf_j_middle02_R':'MiddleFinger2_R',
-        'cf_j_middle03_R':'MiddleFinger3_R',
-        'cf_j_little01_R':'LittleFinger1_R',
-        'cf_j_little02_R':'LittleFinger2_R',
-        'cf_j_little03_R':'LittleFinger3_R',
-        'cf_j_index01_R':'IndexFinger1_R',
-        'cf_j_index02_R':'IndexFinger2_R',
-        'cf_j_index03_R':'IndexFinger3_R',
-
-        'cf_j_thigh00_L':'Left leg',
-        'cf_j_thigh00_R':'Right leg',
-        'cf_j_leg01_L':'Left knee',
-        'cf_j_leg01_R':'Right knee',
-        'cf_j_foot_L':'Left ankle',
-        'cf_j_foot_R':'Right ankle',
-        'cf_j_toes_L':'Left toe',
-        'cf_j_toes_R':'Right toe'
-        }
-        for bone in unity_rename_dict:
+        '''rename core bones for easier identification'''
+        for bone in self.bone_rename_dict:
             if c.get_armature().data.bones.get(bone):
-                c.get_armature().data.bones[bone].name = unity_rename_dict[bone]
+                c.get_armature().data.bones[bone].name = self.bone_rename_dict[bone]
         
         #reset the eye vertex groups after renaming the bones
         mod = c.get_body().modifiers[1]

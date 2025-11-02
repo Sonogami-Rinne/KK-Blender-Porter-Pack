@@ -32,7 +32,9 @@ translation_dictionary = {
     'prep_drop_D'       : 'Unity - VRChat compatible',
     'prep_drop_D_tt'    : 'This option will edit the bone hierarchy to allow Unity to automatically detect the right bones. It will also removed the "Upper Chest" bone from the armature',
     'prep_drop_E'       : 'Unreal Engine',
-    'prep_drop_E_tt'    : """This option will edit the bone hierarchy to match Epic Mannequin skeleton""",
+    'prep_drop_E_tt'    : "This option will edit the bone hierarchy to match the Epic Mannequin skeleton",
+    'prep_drop_F'       : 'Koikatsu compatible',
+    'prep_drop_F_tt'    : "This option will edit the bone hierarchy to match the in-game koikatsu armature. Useful if you want to apply ripped animations from koikatsu onto your model",
 
     'simp_drop'     : 'Armature simplification type',
     'simp_drop_A'   : 'Very simple (SLOW)',

@@ -53,11 +53,12 @@ class PlaceholderProperties(PropertyGroup):
     
     prep_dropdown : EnumProperty(
     items=(
-        ("A", t('prep_drop_A'), t('prep_drop_A_tt')),
+        ("VRM", t('prep_drop_A'), t('prep_drop_A_tt')),
         #("C", "MikuMikuDance - PMX compatible", " "),
-        ("D", t('prep_drop_D'), t('prep_drop_D_tt')),
-        ("E", t('prep_drop_E'), t('prep_drop_E_tt')),
-        ("B", t('prep_drop_B'), t('prep_drop_B_tt')),
+        ("VRC", t('prep_drop_D'), t('prep_drop_D_tt')),
+        ("Unreal", t('prep_drop_E'), t('prep_drop_E_tt')),
+        ("Koikatsu", t('prep_drop_F'), t('prep_drop_F_tt')),
+        ("no_change", t('prep_drop_B'), t('prep_drop_B_tt')),
     ), name="", default=bpy.context.preferences.addons[__package__].preferences.prep_dropdown, description=t('prep_drop'))
 
     simp_dropdown : EnumProperty(

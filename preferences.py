@@ -42,12 +42,13 @@ class KKBPPreferences(bpy.types.AddonPreferences):
     
     prep_dropdown : EnumProperty(
     items=(
-        ("A", t('prep_drop_A'), t('prep_drop_A_tt')),
+        ("VRM", t('prep_drop_A'), t('prep_drop_A_tt')),
         #("C", "MikuMikuDance - PMX compatible", " "),
-        ("D", t('prep_drop_D'), t('prep_drop_D_tt')),
-        ("E", t('prep_drop_E'), t('prep_drop_E_tt')),
-        ("B", t('prep_drop_B'), t('prep_drop_B_tt')),
-    ), name="", default='A', description=t('prep_drop'))
+        ("VRC", t('prep_drop_D'), t('prep_drop_D_tt')),
+        ("Unreal", t('prep_drop_E'), t('prep_drop_E_tt')),
+        ("Koikatsu", t('prep_drop_F'), t('prep_drop_F_tt')),
+        ("no_change", t('prep_drop_B'), t('prep_drop_B_tt')),
+    ), name="", default='VRM', description=t('prep_drop'))
 
     simp_dropdown : EnumProperty(
         items=(
