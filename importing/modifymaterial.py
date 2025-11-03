@@ -39,7 +39,7 @@ class modify_material(bpy.types.Operator):
             self.remap_duplicate_material_slots()
 
             self.load_images()
-            self.replace_materials_and_link_textures_adjust_UV()
+            self.replace_materials_and_link_textures()
             self.SVS_set_body_alpha_mask()
 
             if not is_svs:
@@ -234,7 +234,7 @@ class modify_material(bpy.types.Operator):
                 c.kklog(
                     'This image was not automatically loaded in because its filename exceeds 64 characters: ' + file.name, type='error')
 
-    def replace_materials_and_link_textures_adjust_UV(self):
+    def replace_materials_and_link_textures(self):
         prefix = c.get_prefix()
         is_svs = c.is_svs()
 
@@ -319,7 +319,7 @@ class modify_material(bpy.types.Operator):
                     material.node_tree.nodes['_dark.png'].extension = 'CLIP'
 
         # Do not forget tongue.001
-        if not is_svs:
+        if not is_svs and c.get_tongue():
             if (material_index := c.get_tongue().material_slots.find('cf_m_tang.001')) >= 0:
                 swap_mesh_material('cf_m_tang.001', 'KK Light Dark Texture', 'tongue', c.get_tongue())
                 for texture_name in textures:
