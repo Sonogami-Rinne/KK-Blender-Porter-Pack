@@ -190,6 +190,10 @@ def main():
                 bpy.ops.transform.rotate(value=math.radians(rotateZRadians), orient_axis='Z', orient_type='GLOBAL')
         leftVertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities(leftVertexGroupName, vertexGroupObjectName)
         rightVertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities(rightVertexGroupName, vertexGroupObjectName)
+        if not leftVertexGroupExtremities.maxZ or rightVertexGroupExtremities.maxZ:
+            leftVertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities('cf_J_Eye07_s_L', vertexGroupObjectName)
+            rightVertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities('cf_J_Eye07_s_R', vertexGroupObjectName)
+
         leftVertexGroupMidZ = (leftVertexGroupExtremities.maxZ + leftVertexGroupExtremities.minZ) / 2
         rightVertexGroupMidZ = (rightVertexGroupExtremities.maxZ + rightVertexGroupExtremities.minZ) / 2
         averageVertexGroupMidZ = statistics.mean([leftVertexGroupMidZ, rightVertexGroupMidZ])
