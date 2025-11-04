@@ -190,7 +190,7 @@ def main():
                 bpy.ops.transform.rotate(value=math.radians(rotateZRadians), orient_axis='Z', orient_type='GLOBAL')
         leftVertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities(leftVertexGroupName, vertexGroupObjectName)
         rightVertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities(rightVertexGroupName, vertexGroupObjectName)
-        if not leftVertexGroupExtremities.maxZ or rightVertexGroupExtremities.maxZ:
+        if not leftVertexGroupExtremities.maxZ or not rightVertexGroupExtremities.maxZ:
             leftVertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities('cf_J_Eye07_s_L', vertexGroupObjectName)
             rightVertexGroupExtremities = koikatsuCommons.findVertexGroupExtremities('cf_J_Eye07_s_R', vertexGroupObjectName)
 
@@ -1814,7 +1814,7 @@ def main():
     #do the same for the neck bone
     koikatsuCommons.setTweakLayer(metarig, koikatsuCommons.neckBoneName, koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix)
 
-    #move the breast handle and butt handle bones to the FK torso layer
+    #move the breast handle and butt handle bones to the torso tweak layer
     koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.breastsHandleBoneName, koikatsuCommons.torsoLayerName + koikatsuCommons.fkLayerSuffix)
     koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.leftBreastHandleBoneName, koikatsuCommons.torsoLayerName + koikatsuCommons.fkLayerSuffix)
     koikatsuCommons.assignSingleBoneLayer(metarig, koikatsuCommons.rightBreastHandleBoneName, koikatsuCommons.torsoLayerName + koikatsuCommons.fkLayerSuffix)
@@ -1876,6 +1876,7 @@ def main():
     bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(koikatsuCommons.torsoLayerName), row=4) #move torso
 
     bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(koikatsuCommons.torsoLayerName + koikatsuCommons.tweakLayerSuffix), row=5) #move torso tweak
+    bpy.ops.armature.rigify_collection_set_ui_row(index = get_rigify_index(koikatsuCommons.torsoLayerName + koikatsuCommons.fkLayerSuffix), row=5) #move torso tweak
 
     bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(koikatsuCommons.leftArmLayerName + koikatsuCommons.ikLayerSuffix), row=6) #move arm L IK
     bpy.ops.armature.rigify_collection_set_ui_row(index= get_rigify_index(koikatsuCommons.rightArmLayerName + koikatsuCommons.ikLayerSuffix), row=6) #move arm R IK

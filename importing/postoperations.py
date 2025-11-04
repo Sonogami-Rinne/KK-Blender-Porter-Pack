@@ -48,13 +48,13 @@ class post_operations(bpy.types.Operator):
         Hides unused objects in the Blender scene based on certain conditions.
 
         This method performs the following operations:
-        1. Ensures the armature is not hidden.
+        1. Ensures the correct armature is visible.
         3. Hides all outfits except the one with the lowest ID.
         4. Moves eyegags and tears into their own collection.
         5. Always hides the rigged tongue if present.
         6. Always hides the Bone Widgets collection.
         """
-        c.get_armature().hide_set(False)
+        c.get_armature().hide_set(True if bpy.context.scene.kkbp.use_rigify else False)
         #hide all outfits except the first one
         #but don't hide the collection if separate by material is enabled
         clothes_and_hair = c.get_outfits()
