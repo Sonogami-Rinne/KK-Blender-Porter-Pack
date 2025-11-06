@@ -67,6 +67,10 @@ def prep_operations(prep_type, simp_type):
         for bone_name in modify_armature.bone_rename_dict:
             if armature.data.bones.get(modify_armature.bone_rename_dict[bone_name]):
                 armature.data.bones[modify_armature.bone_rename_dict[bone_name]].name = bone_name
+        c.switch(armature, 'edit')
+        armature.data.edit_bones['p_cf_body_bone'].parent = None
+        armature.data.edit_bones['cf_j_root'].parent = armature.data.edit_bones['p_cf_body_bone']
+        armature.data.edit_bones['cf_n_height'].parent = armature.data.edit_bones['cf_j_root']
         c.switch(armature, 'pose')
 
     #If simplifying the bones...

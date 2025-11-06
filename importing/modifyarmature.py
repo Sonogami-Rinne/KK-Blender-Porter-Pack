@@ -764,15 +764,16 @@ class modify_armature(bpy.types.Operator):
             shorten_bone(bone, 0.1)
         
         #move eye bone location
-        for eyebone in ['Eyesx', 'Eye Controller']:
-            if armature.data.edit_bones.get('cf_d_bust02_R') and armature.data.edit_bones.get('cf_J_Nose_tip'):
-                armature.data.edit_bones[eyebone].head.y = armature.data.edit_bones['cf_d_bust02_R'].tail.y
-                armature.data.edit_bones[eyebone].tail.y = armature.data.edit_bones['cf_d_bust02_R'].tail.y*1.5
-                armature.data.edit_bones[eyebone].tail.z = armature.data.edit_bones['cf_J_Nose_tip'].tail.z
-                armature.data.edit_bones[eyebone].head.z = armature.data.edit_bones['cf_J_Nose_tip'].tail.z
-            else:
-                armature.data.edit_bones[eyebone].head = armature.data.edit_bones['cf_j_head'].head
-                armature.data.edit_bones[eyebone].tail = armature.data.edit_bones[eyebone].head + Vector((0,1,0))
+        if bpy.context.scene.kkbp.use_rigify:
+            for eyebone in ['Eyesx', 'Eye Controller']:
+                if armature.data.edit_bones.get('cf_d_bust02_R') and armature.data.edit_bones.get('cf_J_Nose_tip'):
+                    armature.data.edit_bones[eyebone].head.y = armature.data.edit_bones['cf_d_bust02_R'].tail.y
+                    armature.data.edit_bones[eyebone].tail.y = armature.data.edit_bones['cf_d_bust02_R'].tail.y*1.5
+                    armature.data.edit_bones[eyebone].tail.z = armature.data.edit_bones['cf_J_Nose_tip'].tail.z
+                    armature.data.edit_bones[eyebone].head.z = armature.data.edit_bones['cf_J_Nose_tip'].tail.z
+                else:
+                    armature.data.edit_bones[eyebone].head = armature.data.edit_bones['cf_j_head'].head
+                    armature.data.edit_bones[eyebone].tail = armature.data.edit_bones[eyebone].head + Vector((0,1,0))
 
         #scale BP bones if they exist
         BPList = ['cf_j_kokan', 'cf_j_ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L', 'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R', 'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
@@ -783,6 +784,9 @@ class modify_armature(bpy.types.Operator):
 
     def create_eye_reference_bone(self):
         '''Create a bone called "Eyesx that will act as a fixed reference bone for the Eye controller" '''
+        if not bpy.context.scene.kkbp.use_rigify:
+            return
+
         armature = c.get_armature()
         c.switch(armature, 'edit')       
         new_bone = armature.data.edit_bones.new('Eyesx')
@@ -797,6 +801,9 @@ class modify_armature(bpy.types.Operator):
         c.print_timer('create_eye_reference_bone')
 
     def create_eye_controller_bone(self):
+        if not bpy.context.scene.kkbp.use_rigify:
+            return
+
         armature = c.get_armature()
         c.switch(armature, 'edit')
     
@@ -837,6 +844,9 @@ class modify_armature(bpy.types.Operator):
 
     def create_joint_drivers(self):
         '''There are several joint corrections that use the cf_d_ and cf_s_ bones on the armature. This function attempts to replicate them using blender drivers and bone constraints'''
+        if not bpy.context.scene.kkbp.use_rigify:
+            return
+        
         armature = c.get_armature()
         c.switch(armature, 'pose')
         #generic function to set a copy rotation modifier
@@ -1034,11 +1044,12 @@ class modify_armature(bpy.types.Operator):
             if c.get_armature().data.bones.get(bone):
                 c.get_armature().data.bones[bone].name = self.bone_rename_dict[bone]
         
-        #reset the eye vertex groups after renaming the bones
-        mod = c.get_body().modifiers[1]
-        mod.vertex_group = 'Left Eye'
-        mod = c.get_body().modifiers[2]
-        mod.vertex_group = 'Right Eye'
+        if bpy.context.scene.kkbp.use_rigify:
+            #reset the eye vertex groups after renaming the bones
+            mod = c.get_body().modifiers[1]
+            mod.vertex_group = 'Left Eye'
+            mod = c.get_body().modifiers[2]
+            mod.vertex_group = 'Right Eye'
 
     # %% Supporting functions
     @staticmethod
