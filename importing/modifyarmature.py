@@ -720,7 +720,7 @@ class modify_armature(bpy.types.Operator):
         armature = c.get_armature()
         c.switch(armature, 'edit')
 
-        def shorten_bone(bone, scale):
+        def shorten_bone(bone):
             if armature.data.edit_bones.get(bone):
                 armature.data.edit_bones[bone].tail = armature.data.edit_bones[bone].head + Vector((0, 0, 0.01))
         
@@ -737,31 +737,13 @@ class modify_armature(bpy.types.Operator):
 
         skirtchain = [0,1,2,3,4,5,6,7]
         skirtchild = [0,1,2,3,4]
-        try:
-            for root in skirtchain:
-                for chain in skirtchild:
-                    connect_bone(root, chain)
-        except:
-            c.kklog('No skirt bones detected. Skipping...', type = 'warn')
+        for root in skirtchain:
+            for chain in skirtchild:
+                connect_bone(root, chain)
         
         #scale eye bones, mouth bones, eyebrow bones        
-        eyebones = [1,2,3,4,5,6,7,8]
-        
-        for piece in eyebones:
-            left = 'cf_J_Eye0'+str(piece)+'_s_L'
-            right = 'cf_J_Eye0'+str(piece)+'_s_R'
-            
-            shorten_bone(left, 0.1)
-            shorten_bone(right, 0.1)
-        
-        restOfFace = [
-        'cf_J_Mayu_R', 'cf_J_MayuMid_s_R', 'cf_J_MayuTip_s_R',
-        'cf_J_Mayu_L', 'cf_J_MayuMid_s_L', 'cf_J_MayuTip_s_L',
-        'cf_J_Mouth_R', 'cf_J_Mouth_L',
-        'cf_J_Mouthup', 'cf_J_MouthLow', 'cf_J_MouthMove', 'cf_J_MouthCavity']
-        
-        for bone in restOfFace:
-            shorten_bone(bone, 0.1)
+        for bone in self.face_bones + self.face_bones_mch:
+            shorten_bone(bone)
         
         #move eye bone location
         if bpy.context.scene.kkbp.use_rigify:
@@ -776,8 +758,7 @@ class modify_armature(bpy.types.Operator):
                     armature.data.edit_bones[eyebone].tail = armature.data.edit_bones[eyebone].head + Vector((0,1,0))
 
         #scale BP bones if they exist
-        BPList = ['cf_j_kokan', 'cf_j_ana', 'Vagina_Root', 'Vagina_B', 'Vagina_F', 'Vagina_001_L', 'Vagina_002_L', 'Vagina_003_L', 'Vagina_004_L', 'Vagina_005_L',  'Vagina_001_R', 'Vagina_002_R', 'Vagina_003_R', 'Vagina_004_R', 'Vagina_005_R']
-        for bone in BPList:
+        for bone in self.bp_bones:
             if armature.data.edit_bones.get(bone):
                 armature.data.edit_bones[bone].tail = armature.data.edit_bones[bone].head + Vector((0,0,0.02))
         c.print_timer('scale_skirt_and_face_bones')

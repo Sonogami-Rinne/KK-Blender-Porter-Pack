@@ -2,12 +2,10 @@
 #Switch to Object Mode and select Generated Rig
 
 import bpy
-import traceback
-import sys
 import math
-from math import radians
 from . import commons as koikatsuCommons
 from ... import common as c
+from ...importing.modifyarmature import modify_armature
     
 def main():		   
     generatedRig = bpy.context.active_object
@@ -17,10 +15,7 @@ def main():
     
     generatedRig.show_in_front = True
     generatedRig.display_type = 'TEXTURED'
-    
-    hasRiggedTongue = generatedRig.pose.bones.get(koikatsuCommons.riggedTongueBone1Name)
-    hasBetterPenetrationMod = generatedRig.pose.bones.get(koikatsuCommons.betterPenetrationRootCrotchBoneName)
-    
+        
     metarig = None
     for bone in generatedRig.pose.bones:
         if bone.name.startswith(koikatsuCommons.metarigIdBonePrefix):
@@ -60,30 +55,7 @@ def main():
                             modifier.bone_to = koikatsuCommons.rightEyeBoneName
 
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.eyesTrackTargetBoneName, 1.5)
-    if hasRiggedTongue:
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueLeftBone3Name, 0.25)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueRightBone3Name, 0.25)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueLeftBone4Name, 0.25)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueRightBone4Name, 0.25)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueLeftBone5Name, 0.25)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.riggedTongueRightBone5Name, 0.25)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.headTweakBoneName, 1.1)
-    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.crotchBoneName, 2)
-    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.anusBoneName, 0.25)
-    if hasBetterPenetrationMod:
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationRootCrotchBoneName, 0.09)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationFrontCrotchBoneName, 0.09)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationLeftCrotchBone1Name, 0.09)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationRightCrotchBone1Name, 0.09)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationLeftCrotchBone2Name, 0.09)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationRightCrotchBone2Name, 0.09)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationLeftCrotchBone3Name, 0.09)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationRightCrotchBone3Name, 0.09)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationLeftCrotchBone4Name, 0.09)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationRightCrotchBone4Name, 0.09)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationLeftCrotchBone5Name, 0.09)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationRightCrotchBone5Name, 0.09)
-        koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.betterPenetrationBackCrotchBoneName, 0.09)    
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.leftBreastDeformBone1Name, 0.4)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rightBreastDeformBone1Name, 0.4)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.leftBreastBone2Name, 3)
@@ -132,22 +104,9 @@ def main():
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rightLittleFingerBone3Name, 1.1)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rootBoneName, 0.25)
     
-    for bone in generatedRig.data.bones:
-        if (bone.collections.get(koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName)) or 
-        bone.collections.get(koikatsuCommons.getRigifyLayerIndexByName(koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix))):
-            if (bone.name in [koikatsuCommons.eyesHandleBoneName, koikatsuCommons.leftEyeHandleBoneName, koikatsuCommons.rightEyeHandleBoneName] or 
-            bone.name.startswith('cf_J_Eye0') or bone.name.startswith('cf_J_Mouth') or 
-            bone.name.startswith('cf_J_Mayu')):
-                continue
-            koikatsuCommons.setBoneCustomShapeScale(generatedRig, bone.name, 0.15)
-        
-            if bone.name.startswith('cf_J_Eye0') or bone.name.startswith('cf_J_Mouth') or bone.name.startswith('cf_J_Mayu'):
-                bone.custom_shape_euler_rotation[0] = 1.5708
-    
-    koikatsuCommons.setBoneCustomShapeScale(generatedRig, 'cf_J_Mayumoto_R', 0.15)
-    koikatsuCommons.setBoneCustomShapeScale(generatedRig, 'cf_J_Mayumoto_L', 0.15)
-    koikatsuCommons.setBoneCustomShapeScale(generatedRig, 'cf_J_Mayu_ty', 0.15)
-    koikatsuCommons.setBoneCustomShapeScale(generatedRig, 'cf_J_MouthBase_ty', 0.15)
+    for bone_name in modify_armature.face_bones + modify_armature.face_bones_mch:
+        if bone := generatedRig.pose.bones.get(bone_name):
+            bone.custom_shape_rotation_euler[0] = math.pi/2
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, 'cf_j_kokan', 0.2)
 
     headBone = generatedRig.pose.bones[koikatsuCommons.originalBonePrefix + koikatsuCommons.headBoneName]
@@ -212,7 +171,7 @@ def main():
         if bone.collections.get(koikatsuCommons.faceLayerName):
             bone.use_deform = True
     
-    #face bones deform
+    #other bones deform
     for bone in metarig.data.bones:
         if bone.collections.get(koikatsuCommons.faceLayerName + koikatsuCommons.mchLayerSuffix) or bone.collections.get(koikatsuCommons.nsfwLayerName):
             koikatsuCommons.unlockAllPoseTransforms(metarig, bone.name)
