@@ -1,42 +1,16 @@
-
-# This file performs the following operations
-
-# 	Removes empties and parents all objects to the Body armature
-# 	Removes mmd bone constraints and bone drivers, unlocks all bones
-# 	Scales armature bones down by a factor of 12
-# 	Reparents the leg03 bone and p_cf_body_bone to match koikatsu armature
-#   Deletes all bones not parented to the cf_n_height bone
-
-# 	Move and rotate finger bones to match koikatsu in game armature
-# 	Set bone roll data to match koikatsu in game armature
-# 	Slightly bend some bones outward to better support IKs
-
-# 	Delete empty vertex groups on the body as long as it's not a bone on the armature
-# 	Places each bone type (core bones, skirt bones, cf_s_ bones, etc) onto different armature layers
-# 	Identifies accessory bones and moves them to their own armature layer
-#   Also sets the outfit ID for each accessory bone (not all accessory bones need to be visible at all times,
-#         so only the current outfit bones will be shown at the end)
-
-# 	(KKBP armature) Visually connects all toe bones
-# 	(KKBP armature) Scales all skirt / face / eye / BP bones, connects all skirt bones
-
-# 	(KKBP Armature) Creates a reference bone for the eye uv warp modifier (Eyesx)
-# 	(KKBP armature) Creates an eye controller bone for the eye uv warp modifier (Eye Controller)
-# 	(KKBP armature) shortens kokan bone
-#   (KKBP armature) resizes skirt and face bones
-
-# 	(KKBP armature) Repurposes pv bones for IK functionality
-# 	(KKBP armature) Creates a foot IK, hand IK, heel controller
-# 	(KKBP armature) Setup bone drivers for correction bones
-# 	(KKBP armature) Moves new bones for IK / eyes to correct armature layers
-
-# 	(KKBP armature) Adds bones to bone groups to give them colors
-# 	(KKBP armature) Renames some core bones to be more readable
-# 	Set mmd bone names for each bone
-
-# 	(KKBP armature) Load custom bone widgets from the KK Shader file to apply to the armature
-#   (KKBP armature) Hide everything but the core bones
-# 	(KKBP armature) Hide bone widgets collection
+# Reparent outfits, alternate clothing, hairs, hitboxes and remove import empties
+# Unlocks the armature, uynlocks bones and removes bone constraints
+# Restores bone matrices and bone scales using the bone JSON files
+# Apply pose-as-rest (mysteryem.apply_pose_as_rest_pose_plus) to fix transform issues.
+# Adjusts bone heads / tails for legs and arms to make sure IKs don't bend backwards.
+# Create helper bones (Eyesx, Eye Controller) and add UV_WARP modifiers for eye UVs when scene.kkbp.use_rigify is enabled.
+# Finger/thumb edits: rotate/flip/resize finger bones and reset orientation for listed bones.
+# Scale/shorten skirt, face and BP bones; visually connect toe bones when present.
+# Remove empty vertex groups on body.
+# Reorganize bones into named bone-collections (layers) like Torso, Arm.L FK, Fingers, Skirt, Face (MCH), etc., and remove default mmd dummy layers.
+# Give each outfit a bone collection for accesories
+# Setup joint correction bones when Rigify is used: 
+# Rename bones to be more readable
 
 # Survey code was taken from MediaMoots here https://github.com/FlailingFog/KK-Blender-Shader-Pack/issues/29
 # Majority of the joint driver corrections were taken from a blend file by johnbbob_la_petite on the koikatsu discord
@@ -198,7 +172,6 @@ class modify_armature(bpy.types.Operator):
                 self.reorganize_armature_layers()
                 self.relayer_accessory_bones()
 
-                self.create_eye_reference_bone()
                 self.create_eye_controller_bone()
                 self.shorten_kokan_bone()
                 self.scale_skirt_and_face_bones()
@@ -463,7 +436,7 @@ class modify_armature(bpy.types.Operator):
             'cf_d_arm03_L', 'cf_j_arm00_L', 'cf_d_forearm02_L', 'cf_j_hand_L', 'cf_d_wrist_L', 'cf_j_hand_L', 'cf_d_kneeF_L', 
             'cf_j_leg01_L', 'cf_d_siri_L', 'cf_j_thigh00_L', 'cf_d_thigh02_L', 'cf_j_thigh00_L', 'cf_d_thigh03_L', 
             'cf_j_thigh00_L', 'cf_d_leg02_L', 'cf_j_leg01_L', 'cf_d_leg03_L', 'cf_j_leg01_L', 'cf_d_shoulder02_R', 
-            'cf_j_arm00_Rcf_d_arm01_R', 'cf_j_arm00_R', 'cf_d_arm02_R', 'cf_j_arm00_R', 'cf_d_arm03_R', 'cf_j_arm00_R', 
+            'cf_j_arm00_R', 'cf_d_arm01_R', 'cf_j_arm00_R', 'cf_d_arm02_R', 'cf_j_arm00_R', 'cf_d_arm03_R', 'cf_j_arm00_R', 
             'cf_d_forearm02_R', 'cf_j_hand_R', 'cf_d_wrist_R', 'cf_j_hand_R', 'cf_d_kneeF_R', 'cf_j_leg01_R', 'cf_d_siri_R', 
             'cf_j_thigh00_R', 'cf_d_thigh02_R', 'cf_j_thigh00_R', 'cf_d_thigh03_R', 'cf_j_thigh00_R', 'cf_d_leg02_R', 
             'cf_j_leg01_R', 'cf_d_leg03_R', 'cf_j_leg01_R', 'cf_s_waist02', 'cf_j_thigh00_L', 'cf_j_thigh00_R', 'cf_s_leg_L', 
@@ -471,7 +444,7 @@ class modify_armature(bpy.types.Operator):
             'cf_d_hand_R', 'cf_d_hand_L', 'cf_s_elboback_R', 'cf_s_elbo_R', 'cf_s_elboback_L', 'cf_s_elbo_L', 'cf_d_shoulder02_R', 
             'cf_d_shoulder02_L', 'cf_s_leg_R', 'cf_s_leg_L', 'cf_s_waist02', 'cf_j_leg03_R', 'cf_j_leg03_L', 'cf_n_height', 
             'cf_j_shoulder_L', 'cf_j_shoulder_R', 'cf_j_neck', 'cf_j_head', 'cf_j_waist01', 'cf_j_spine01', 'cf_j_spine02', 
-            'cf_j_spine03', 'cf_j_hips', 'cf_hit_head', 'cf_J_Mayu_R', 'cf_d_bust02_R', 'cf_J_Nose_tip', 'cf_j_waist02']
+            'cf_j_spine03', 'cf_j_hips', 'cf_hit_head', 'cf_j_waist02']
         ignore_bones.extend(self.finger_bones)
 
         #  Set roll data
@@ -748,11 +721,11 @@ class modify_armature(bpy.types.Operator):
         #move eye bone location
         if bpy.context.scene.kkbp.use_rigify:
             for eyebone in ['Eyesx', 'Eye Controller']:
-                if armature.data.edit_bones.get('cf_d_bust02_R') and armature.data.edit_bones.get('cf_J_Nose_tip'):
-                    armature.data.edit_bones[eyebone].head.y = armature.data.edit_bones['cf_d_bust02_R'].tail.y
-                    armature.data.edit_bones[eyebone].tail.y = armature.data.edit_bones['cf_d_bust02_R'].tail.y*1.5
-                    armature.data.edit_bones[eyebone].tail.z = armature.data.edit_bones['cf_J_Nose_tip'].tail.z
-                    armature.data.edit_bones[eyebone].head.z = armature.data.edit_bones['cf_J_Nose_tip'].tail.z
+                if armature.data.edit_bones.get('cf_J_NoseBridge_rx'):
+                    armature.data.edit_bones[eyebone].head.y = armature.data.edit_bones['cf_J_NoseBridge_rx'].head.y
+                    armature.data.edit_bones[eyebone].tail.y = armature.data.edit_bones['cf_J_NoseBridge_rx'].head.y*1.5
+                    armature.data.edit_bones[eyebone].tail.z = armature.data.edit_bones['cf_J_NoseBridge_rx'].head.z
+                    armature.data.edit_bones[eyebone].head.z = armature.data.edit_bones['cf_J_NoseBridge_rx'].head.z
                 else:
                     armature.data.edit_bones[eyebone].head = armature.data.edit_bones['cf_j_head'].head
                     armature.data.edit_bones[eyebone].tail = armature.data.edit_bones[eyebone].head + Vector((0,1,0))
@@ -763,8 +736,7 @@ class modify_armature(bpy.types.Operator):
                 armature.data.edit_bones[bone].tail = armature.data.edit_bones[bone].head + Vector((0,0,0.02))
         c.print_timer('scale_skirt_and_face_bones')
 
-    def create_eye_reference_bone(self):
-        '''Create a bone called "Eyesx that will act as a fixed reference bone for the Eye controller" '''
+    def create_eye_controller_bone(self):
         if not bpy.context.scene.kkbp.use_rigify:
             return
 
@@ -779,16 +751,9 @@ class modify_armature(bpy.types.Operator):
         new_bone.parent = armature.data.edit_bones['cf_j_head']
         c.switch(armature, 'object')
         self.set_armature_layer('Eyesx', 'Deform bones')
-        c.print_timer('create_eye_reference_bone')
-
-    def create_eye_controller_bone(self):
-        if not bpy.context.scene.kkbp.use_rigify:
-            return
-
-        armature = c.get_armature()
-        c.switch(armature, 'edit')
     
         #roll the eye bone. create a copy and name it eye controller
+        c.switch(armature, 'edit')
         armature_data = armature.data
         armature_data.edit_bones['Eyesx'].roll = -math.pi/2
         copy = self.new_bone('Eye Controller')

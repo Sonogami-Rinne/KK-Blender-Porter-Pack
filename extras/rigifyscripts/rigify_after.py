@@ -103,7 +103,10 @@ def main():
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.leftLittleFingerBone3Name, 1.1)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rightLittleFingerBone3Name, 1.1)
     koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rootBoneName, 0.25)
-    
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.eyesHandleBoneName, 0.72)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.leftEyeHandleBoneName, 0.72)
+    koikatsuCommons.setBoneCustomShapeScale(generatedRig, koikatsuCommons.rightEyeHandleBoneName, 0.72)
+
     for bone_name in modify_armature.face_bones + modify_armature.face_bones_mch:
         if bone := generatedRig.pose.bones.get(bone_name):
             bone.custom_shape_rotation_euler[0] = math.pi/2

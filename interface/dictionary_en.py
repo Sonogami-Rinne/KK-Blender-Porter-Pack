@@ -99,9 +99,6 @@ translation_dictionary = {
     'no_outline' : 'Don\'t use outlines',
     'outline_tt'  : "If outlines are enabled, KKBP will create an outline material for each material on the model.",
 
-    'use_rigify_tt' : 'Enable this to use Rigify as the default armature when importing models. Requires the Rigify addon to be enabled in Blender preferences',
-    'dont_use_rigify_tt' : 'Disable this to use the FK armature as the default armature when importing models',
-
     'bad_prep': 'Import with the FK armature to use Export features!'
     }
 
