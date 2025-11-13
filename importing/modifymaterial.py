@@ -379,11 +379,6 @@ class modify_material(bpy.types.Operator):
             bpy.ops.object.material_slot_move(direction='UP')
             bpy.ops.object.material_slot_move(direction='UP')
         
-        #delete the kage material
-        if index := c.get_body().data.materials.find('KK cf_m_eyeline_kage'):
-            bpy.context.object.active_material_index = index
-            bpy.ops.object.material_slot_remove()
-
     def link_textures_for_tongue_tear_gag(self):
 
         #load all gag eye textures if it exists
