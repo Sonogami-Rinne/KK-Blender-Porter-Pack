@@ -102,8 +102,16 @@ class mat_comb_setup(bpy.types.Operator):
                 image_node = nodes.new('ShaderNodeTexImage')
                 image_node.name = 'Image Texture'
                 links.new(emissive_node.inputs[0], image_node.outputs[0])
+                links.new(emissive_node.inputs[4], image_node.outputs[1])
+                output_node = [n for n in nodes if n.type == 'OUTPUT_MATERIAL'][0]
+                links.new(emissive_node.outputs[0], output_node.inputs[0])
                 image_node.image = nodes['_light.png'].image
-            context.view_layer.objects.active = obj
+            #remove outline
+            c.switch(obj, 'OBJECT')
             bpy.ops.object.material_slot_remove_unused()
+            #remove the solidify modifier
+            for mod in [m for m in obj.modifiers if m.type == 'SOLIDIFY']:
+                mod.show_viewport = False
+                mod.show_render = False
 
         return {'FINISHED'}
