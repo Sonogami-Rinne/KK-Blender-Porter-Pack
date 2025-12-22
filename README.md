@@ -1,5 +1,8 @@
 # KK Blender Porter Pack
 
+# Latest: https://gitgoon.dev/kkbp-dev/KKBP_Importer
+# 最新地址： https://gitgoon.dev/kkbp-dev/KKBP_Importer
+
 ![image](https://raw.githubusercontent.com/FlailingFog/flailingfog.github.io/master/assets/images/readme.png)
 
 Plugin pack for exporting and cleaning up Koikatsu characters in Blender.  
